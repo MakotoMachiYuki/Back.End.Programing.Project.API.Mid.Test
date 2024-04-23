@@ -9,8 +9,21 @@ const { errorResponder, errorTypes } = require('../../../core/errors');
  * @returns {object} Response object or pass an error to the next route
  */
 async function getUsers(request, response, next) {
+  const page_number = parseInt(request.query.page_number);
+  const page_size = parseInt(request.query.page_size);
+  const search = request.query.search;
+  const sort = request.query.sort;
+
   try {
-    const users = await usersService.getUsers();
+    const users = await usersService.getUsers(page_number, page_size, search);
+
+    if (users === 'PageNumberPageSize') {
+      throw errorResponder(
+        errorTypes.PAGE_NUMBER_SIZE,
+        'INVALID PAGE NUMBER OR SIZE!'
+      );
+    }
+
     return response.status(200).json(users);
   } catch (error) {
     return next(error);

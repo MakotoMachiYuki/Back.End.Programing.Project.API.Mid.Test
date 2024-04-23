@@ -8,6 +8,11 @@ async function getUsers() {
   return User.find({});
 }
 
+async function getUsersEmail(emailTest) {
+  const regex = new RegExp(emailTest, 'i');
+  return User.findOne({ email: regex });
+}
+
 /**
  * Get user detail
  * @param {string} id - User ID
@@ -89,4 +94,5 @@ module.exports = {
   deleteUser,
   getUserByEmail,
   changePassword,
+  getUsersEmail,
 };
