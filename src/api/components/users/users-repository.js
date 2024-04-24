@@ -10,12 +10,23 @@ async function getUsers() {
 }
 
 //peak spaghetti code
-async function getUserByFilteringAndSorting(limit, offset, sortPath, sort) {
-  const sortValue = parseInt(sort);
-  if (sortPath == 'name') {
-    return User.find({}).limit(limit).skip(offset).sort({ name: sortValue });
+async function getUserByFilteringAndSorting(
+  limitOfDataValue,
+  offsetOfDataValue,
+  sortPathOfDataValue,
+  sortOfDataValue
+) {
+  const sortValueOfDataValue = parseInt(sortOfDataValue);
+  if (sortPathOfDataValue == 'name') {
+    return User.find({})
+      .limit(limitOfDataValue)
+      .skip(offsetOfDataValue)
+      .sort({ name: sortValueOfDataValue });
   } else {
-    return User.find({}).limit(limit).skip(offset).sort({ email: sortValue });
+    return User.find({})
+      .limit(limitOfDataValue)
+      .skip(offsetOfDataValue)
+      .sort({ email: sortValueOfDataValue });
   }
 }
 
