@@ -3,13 +3,19 @@ const { hashPassword, passwordMatched } = require('../../../utils/password');
 const { sortedLastIndexOf } = require('lodash');
 
 /**
- * Get list of users
- * @param {integer} page_number
- * @param {integer} page_size
- * @param {integer} offset
+ * Get list of users and returns with pagination
+ * @param {Integer} numberOfPages - page_number
+ * @param {Integer} sizeofPages - page_size
+ * @param {Integer} searchSubString - search
+ * @param {Integer} sortSubString - sort
  * @returns {Array}
  */
-async function getUsers(numberOfPages, sizeofPages, search, sort) {
+async function getUsers(
+  numberOfPages,
+  sizeofPages,
+  searchSubString,
+  sortSubString
+) {
   //get all users in the database
   const usersAllEveryone = await usersRepository.getUsers();
 
@@ -25,18 +31,18 @@ async function getUsers(numberOfPages, sizeofPages, search, sort) {
   const endOfData = page_number * page_size;
 
   //assigning searchPath (email/name) and searchName variable
-  if (search == null) {
+  if (searchSubString == null) {
     return 'NoSearchValue';
   }
-  const searchByName = search.split('=');
+  const searchByName = searchSubString.split('=');
   const [searchPath, searchName] = searchByName[0].split(':');
 
   //assigning sorting (email(default)/name)
-  if (sort == null) {
+  if (sortSubString == null) {
     sort = 'sort=email:asc';
   }
-  let sortByName = sort.split('=');
-  let [sortPath, tempsortValue] = sortByName[0].split(':');
+  const sortByName = sortSubString.split('=');
+  const [sortPath, tempsortValue] = sortByName[0].split(':');
 
   //the default ascending is 1 and descending is -1 for mongoose .sort() function
   let sortValue = 1;
@@ -133,7 +139,7 @@ async function previous_page(firstOfData) {
  * @returns {Boolean}
  */
 async function next_page(endOfData, count) {
-  if (endOfData + 1 < count) {
+  if (endOfData <= count) {
     return true;
   } else {
     return false;
