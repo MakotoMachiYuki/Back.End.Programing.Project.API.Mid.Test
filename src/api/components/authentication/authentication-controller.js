@@ -11,23 +11,30 @@ const authenticationServices = require('./authentication-service');
 
 //initialize all required variables
 let loginAttempts = 0;
-let maxAttempts = 2;
+const maxAttempts = 5;
 let accountLocked = false;
 let lockedTimer = null;
-let timeLimit = 2; // in minutes
+const timeLimit = 30; // in minutes
 async function login(request, response, next) {
   const { email, password } = request.body;
 
   try {
-    //check if the account is locked and the time right now is already below than the locked timer
+    //check if the account is locked and the time right now is below than the locked timer
     if (accountLocked && Date.now() < lockedTimer) {
       //reseting the login Attempts
       loginAttempts = 0;
       //checking how much times left
       const timeLeft = Math.ceil((lockedTimer - Date.now()) / (1000 * 60));
+
       return response.status(403).json({
         error: `Too Many Login Attempts! ${timeLeft} minutes left until you can try it again :)`,
       });
+    }
+    //if the time right now over the locked timer then the login attempts will be reseted and account will be unlocked
+    if (accountLocked && Date.now() > lockedTimer) {
+      //reseting the login Attempts
+      loginAttempts = 0;
+      accountLocked = false;
     }
 
     //locked the account and set the locked timer based on the time right now times the timelimit
@@ -49,11 +56,13 @@ async function login(request, response, next) {
     if (!loginSuccess) {
       //every fail login will result loginAttempts plus 1
       loginAttempts += 1;
+
       return response.status(403).json({
         error: `Invalid email or password!. Please try again! Attempts: ${loginAttempts}`,
       });
     }
 
+    //successful login will rest loginAttempts back to 0
     loginAttempts = 0;
     return response.status(200).json(loginSuccess);
   } catch (error) {

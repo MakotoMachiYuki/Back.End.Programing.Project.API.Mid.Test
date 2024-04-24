@@ -12,12 +12,12 @@ const { sortedLastIndexOf } = require('lodash');
 async function getUsers(numberOfPages, sizeofPages, search, sort) {
   //get all users in the database
   const usersAllEveryone = await usersRepository.getUsers();
+
+  //initialize temporary array that will be used later
   const tempDataStoraGE = [];
 
-  let tempNumber = numberOfPages;
-  let tempSize = sizeofPages;
-
-  const [page_number, page_size] = [tempNumber, tempSize];
+  //initialize the page_number and page_size variable
+  const [page_number, page_size] = [numberOfPages, sizeofPages];
 
   //initialize the first index of the data
   const firstOfData = (page_number - 1) * page_size;
@@ -80,7 +80,8 @@ async function getUsers(numberOfPages, sizeofPages, search, sort) {
   }
 
   //filter the data by .includes() function and all lowercase by the given searchPath and searchName
-  for (let MACHI = 0; MACHI < filteredUsersArray.length; MACHI++) {
+  let MACHI = 0;
+  while (MACHI < filteredUsersArray.length) {
     if (searchPath === 'email') {
       if (
         tempDataStoraGE[MACHI].email
@@ -108,7 +109,9 @@ async function getUsers(numberOfPages, sizeofPages, search, sort) {
         });
       }
     }
+    MACHI += 1;
   }
+
   return paginationOfAllTheData;
 }
 /**

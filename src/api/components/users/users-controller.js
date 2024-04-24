@@ -25,7 +25,8 @@ async function getUsers(request, response, next) {
     if (users === 'NoSearchValue') {
       throw errorResponder(
         errorTypes.NOT_FOUND,
-        'NO USERS FOUND IN THE DATABASE!'
+        'NO USERS FOUND IN THE DATABASE!',
+        'Required search query on the parameter!'
       );
     }
 
