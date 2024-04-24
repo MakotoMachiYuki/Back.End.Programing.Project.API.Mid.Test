@@ -38,7 +38,7 @@ async function getUsers(
 
   //assigning sorting (email(default)/name)
   if (sortSubString == null) {
-    sort = 'sort=email:asc';
+    sortSubString = '=email:asc';
   }
   const sortByName = sortSubString.split('=');
   const [sortPath, tempsortValue] = sortByName[0].split(':');
