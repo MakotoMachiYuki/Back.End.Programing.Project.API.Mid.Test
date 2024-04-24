@@ -9,7 +9,14 @@ async function getUsers() {
   return User.find({});
 }
 
-//peak spaghetti code
+/**
+ * get a list of users by the limit of page size, where the data started (offset)
+ * @param {Integer} limitOfDataValue - page Size
+ * @param {Integer} offsetOfDataValue - where the data started
+ * @param {Integer} sortPathOfDataValue - path for sorting
+ * @param {Integer} sortOfDataValue - sort by ascending or descending
+ * @returns {Promise}
+ */
 async function getUserByFilteringAndSorting(
   limitOfDataValue,
   offsetOfDataValue,

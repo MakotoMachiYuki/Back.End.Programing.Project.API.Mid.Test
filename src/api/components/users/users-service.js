@@ -18,10 +18,11 @@ async function getUsers(numberOfPages, sizeofPages, search, sort) {
   let tempSize = sizeofPages;
 
   const [page_number, page_size] = [tempNumber, tempSize];
-  const firstOfData = (page_number - 1) * page_size;
-  const endOfData = page_number * page_size;
 
-  console.log(tempNumber, tempSize);
+  //initialize the first index of the data
+  const firstOfData = (page_number - 1) * page_size;
+  //initialize the last index of the data
+  const endOfData = page_number * page_size;
 
   //assigning searchPath (email/name) and searchName variable
   if (search == null) {
@@ -36,13 +37,12 @@ async function getUsers(numberOfPages, sizeofPages, search, sort) {
   }
   let sortByName = sort.split('=');
   let [sortPath, tempsortValue] = sortByName[0].split(':');
+
+  //the default ascending is 1 and descending is -1 for mongoose .sort() function
   let sortValue = 1;
   if (tempsortValue === 'desc') {
     sortValue = -1;
   }
-
-  console.log(sortByName);
-  console.log(`sortPath = ${sortPath} && SortValue = ${sortValue} `);
 
   //get the users which is filtered by page number and page size + sort them too
   const filteredUsersArray = await usersRepository.getUserByFilteringAndSorting(
@@ -52,12 +52,14 @@ async function getUsers(numberOfPages, sizeofPages, search, sort) {
     sortValue
   );
 
+  //asssigning specific values to all the variables below
   const count = usersAllEveryone.length;
   const total_pages = Math.ceil(count / page_size);
   const has_previous_page = await previous_page(firstOfData);
   const has_next_page = await next_page(endOfData, count);
 
-  const results = {
+  //initialize the pagination
+  const paginationOfAllTheData = {
     page_number: page_number,
     page_size: page_size,
     count: count,
@@ -67,6 +69,7 @@ async function getUsers(numberOfPages, sizeofPages, search, sort) {
     data: [],
   };
 
+  //inputting the data to the temporary array storage
   for (let MACHI = 0; MACHI < filteredUsersArray.length; MACHI++) {
     const tempUserData = filteredUsersArray[MACHI];
     tempDataStoraGE.push({
@@ -76,20 +79,29 @@ async function getUsers(numberOfPages, sizeofPages, search, sort) {
     });
   }
 
+  //filter the data by .includes() function and all lowercase by the given searchPath and searchName
   for (let MACHI = 0; MACHI < filteredUsersArray.length; MACHI++) {
     if (searchPath === 'email') {
-      if (tempDataStoraGE[MACHI].email.includes(searchName)) {
+      if (
+        tempDataStoraGE[MACHI].email
+          .toLowerCase()
+          .includes(searchName.toLowerCase())
+      ) {
         const filterData = tempDataStoraGE[MACHI];
-        results.data.push({
+        paginationOfAllTheData.data.push({
           id: filterData.id,
           name: filterData.name,
           email: filterData.email,
         });
       }
     } else if (searchPath === 'name') {
-      if (tempDataStoraGE[MACHI].name.includes(searchName)) {
+      if (
+        tempDataStoraGE[MACHI].name
+          .toLowerCase()
+          .includes(searchName.toLowerCase())
+      ) {
         const filterData = tempDataStoraGE[MACHI];
-        results.data.push({
+        paginationOfAllTheData.data.push({
           id: filterData.id,
           name: filterData.name,
           email: filterData.email,
@@ -97,7 +109,7 @@ async function getUsers(numberOfPages, sizeofPages, search, sort) {
       }
     }
   }
-  return results;
+  return paginationOfAllTheData;
 }
 /**
  * Return true or false if there is previous page or not
