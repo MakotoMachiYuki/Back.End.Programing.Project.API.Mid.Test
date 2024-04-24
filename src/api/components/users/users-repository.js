@@ -1,3 +1,4 @@
+const { P } = require('pino');
 const { User } = require('../../../models');
 
 /**
@@ -8,9 +9,16 @@ async function getUsers() {
   return User.find({});
 }
 
-async function getUsersEmail(emailTest) {
-  const regex = new RegExp(emailTest, 'i');
-  return User.findOne({ email: regex });
+async function getUsersLimit(limit, offset) {
+  return User.find({}).limit(limit).skip(offset);
+}
+//peak spaghetti code
+async function getUserByFilteringAndSorting(limit, offset, sortPath, sort) {
+  if (sortPath === 'name') {
+    return User.find({}).limit(limit).skip(offset).sort({ name: sort });
+  } else {
+    return User.find({}).limit(limit).skip(offset).sort({ email: sort });
+  }
 }
 
 /**
@@ -94,5 +102,6 @@ module.exports = {
   deleteUser,
   getUserByEmail,
   changePassword,
-  getUsersEmail,
+  getUserByFilteringAndSorting,
+  getUsersLimit,
 };

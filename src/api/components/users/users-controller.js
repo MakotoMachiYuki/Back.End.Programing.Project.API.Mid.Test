@@ -15,14 +15,12 @@ async function getUsers(request, response, next) {
   const sort = request.query.sort;
 
   try {
-    const users = await usersService.getUsers(page_number, page_size, search);
-
-    if (users === 'PageNumberPageSize') {
-      throw errorResponder(
-        errorTypes.PAGE_NUMBER_SIZE,
-        'INVALID PAGE NUMBER OR SIZE!'
-      );
-    }
+    const users = await usersService.getUsers(
+      page_number,
+      page_size,
+      search,
+      sort
+    );
 
     return response.status(200).json(users);
   } catch (error) {

@@ -8,15 +8,21 @@ const { hashPassword, passwordMatched } = require('../../../utils/password');
  * @param {integer} offset
  * @returns {Array}
  */
-async function getUsers(page_number, page_size, search) {
-  //const [searchName, searchPath] = search.split(':');
-  //const users = await usersRepository.getUsers();
-  const users = await usersRepository.getUsers();
+async function getUsers(number, size, search, sort) {
+  const [page_number, page_size] = await checkPage(number, size);
 
-  const count = users.length;
-  const total_pages = Math.ceil(count / page_size);
   const firstOfData = (page_number - 1) * page_size;
   const endOfData = page_number * page_size;
+
+  const searchByName = search.split('=');
+  const [searchPath, searchName] =
+    searchByName.length > 1 ? searchByName[1].split(':') : [];
+
+  const users = await usersRepository.getUsersLimit(page_size, firstOfData);
+  const usersAll = await usersRepository.getUsers();
+
+  const count = usersAll.length;
+  const total_pages = Math.ceil(count / page_size);
   const has_previous_page = await previous_page(firstOfData);
   const has_next_page = await next_page(endOfData, count);
 
@@ -30,22 +36,64 @@ async function getUsers(page_number, page_size, search) {
     data: [],
   };
 
-  if (endOfData >= users.length) {
-    return 'PageNumberPageSize';
-  }
-
-  for (let i = firstOfData; i < endOfData; i += 1) {
+  const tempData = [];
+  for (let i = 0; i < users.length; i++) {
     const user = users[i];
-
-    results.data.push({
+    tempData.push({
       id: user.id,
       name: user.name,
       email: user.email,
     });
   }
+
+  if (searchPath === 'email') {
+    for (let i = 0; i < users.length; i++) {
+      if (tempData[i].email.includes(searchName)) {
+        const user = tempData[i];
+        results.data.push({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        });
+      }
+    }
+  }
+  if (searchPath === 'name') {
+    for (let i = 0; i < users.length; i++) {
+      if (tempData[i].name.includes(searchName)) {
+        const user = tempData[i];
+        results.data.push({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        });
+      }
+    }
+  }
   return results;
 }
 
+/**
+ * check if page_number or page_size or both are null so that it could be inserted default values
+ * @param {Integer} number - page_number
+ * @param {Integer} size  - page_size
+ * @returns {Integer}
+ */
+async function checkPage(number, size) {
+  const users = await usersRepository.getUsers();
+  if (number === undefined || size === undefined) {
+    number = 1;
+    size = users.length;
+    return [number, size];
+  } else {
+    return [number, size];
+  }
+}
+/**
+ * Return true or false if there is previous page or not
+ * @param {Number} firstOfData - first index of data to be push
+ * @returns {Boolean}
+ */
 async function previous_page(firstOfData) {
   if (firstOfData > 0) {
     return true;
@@ -53,11 +101,25 @@ async function previous_page(firstOfData) {
     return false;
   }
 }
+/**
+ * Return true or false if there is next page or not
+ * @param {Number} endOfData - last index of data to be push
+ * @param {Integer} count - total users data
+ * @returns {Boolean}
+ */
 async function next_page(endOfData, count) {
   if (endOfData + 1 < count) {
     return true;
   } else {
     return false;
+  }
+}
+
+async function checkSort(sort) {
+  if (sort === 'desc') {
+    return -1;
+  } else {
+    return 1;
   }
 }
 
