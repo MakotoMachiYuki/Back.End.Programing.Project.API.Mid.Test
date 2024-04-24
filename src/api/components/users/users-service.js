@@ -1,6 +1,5 @@
 const usersRepository = require('./users-repository');
 const { hashPassword, passwordMatched } = require('../../../utils/password');
-const { sortedLastIndexOf } = require('lodash');
 
 /**
  * Get list of users and returns with pagination
