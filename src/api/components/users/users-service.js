@@ -29,12 +29,17 @@ async function getUsers(
   //initialize the last index of the data
   const endOfData = page_number * page_size;
 
-  //assigning searchPath (email/name) and searchName variable
+  //if the search is empty, it'll return no data error
   if (searchSubString == null) {
     return 'NoSearchValue';
   }
+  //assigning searchPath (email/name) and searchName variable
   const searchByName = searchSubString.split('=');
   const [searchPath, searchName] = searchByName[0].split(':');
+  //if the search format is wrong  it'll return no data error
+  if (searchName === '') {
+    return 'NoSearchValue';
+  }
 
   //assigning sorting (email(default)/name)
   if (sortSubString == null) {
