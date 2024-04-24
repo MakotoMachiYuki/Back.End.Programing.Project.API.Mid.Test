@@ -11,10 +11,10 @@ const authenticationServices = require('./authentication-service');
 
 //initialize all required variables
 let loginAttempts = 0;
-let maxAttempts = 5;
+let maxAttempts = 2;
 let accountLocked = false;
 let lockedTimer = null;
-let timeLimit = 30; // in minutes
+let timeLimit = 2; // in minutes
 async function login(request, response, next) {
   const { email, password } = request.body;
 
@@ -36,8 +36,7 @@ async function login(request, response, next) {
       lockedTimer = Date.now() + 1000 * 60 * timeLimit;
 
       return response.status(403).json({
-        error:
-          'Attempts Limit Reached! Now account lock down for 30 minutes! :)',
+        error: `Attempts Limit Reached! Now account lock down for ${timeLimit} minutes! :)`,
       });
     }
 
