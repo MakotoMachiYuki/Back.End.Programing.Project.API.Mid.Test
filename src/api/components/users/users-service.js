@@ -1,5 +1,6 @@
 const usersRepository = require('./users-repository');
 const { hashPassword, passwordMatched } = require('../../../utils/password');
+const { sortedLastIndexOf } = require('lodash');
 
 /**
  * Get list of users
@@ -8,20 +9,50 @@ const { hashPassword, passwordMatched } = require('../../../utils/password');
  * @param {integer} offset
  * @returns {Array}
  */
-async function getUsers(number, size, search, sort) {
-  const [page_number, page_size] = await checkPage(number, size);
+async function getUsers(numberOfPages, sizeofPages, search, sort) {
+  //get all users in the database
+  const usersAllEveryone = await usersRepository.getUsers();
+  const tempDataStoraGE = [];
 
+  let tempNumber = numberOfPages;
+  let tempSize = sizeofPages;
+
+  const [page_number, page_size] = [tempNumber, tempSize];
   const firstOfData = (page_number - 1) * page_size;
   const endOfData = page_number * page_size;
 
+  console.log(tempNumber, tempSize);
+
+  //assigning searchPath (email/name) and searchName variable
+  if (search == null) {
+    return 'NoSearchValue';
+  }
   const searchByName = search.split('=');
-  const [searchPath, searchName] =
-    searchByName.length > 1 ? searchByName[1].split(':') : [];
+  const [searchPath, searchName] = searchByName[0].split(':');
 
-  const users = await usersRepository.getUsersLimit(page_size, firstOfData);
-  const usersAll = await usersRepository.getUsers();
+  //assigning sorting (email(default)/name)
+  if (sort == null) {
+    sort = 'sort=email:asc';
+  }
+  let sortByName = sort.split('=');
+  let [sortPath, tempsortValue] = sortByName[0].split(':');
+  let sortValue = 1;
+  if (tempsortValue === 'desc') {
+    sortValue = -1;
+  }
 
-  const count = usersAll.length;
+  console.log(sortByName);
+  console.log(`sortPath = ${sortPath} && SortValue = ${sortValue} `);
+
+  //get the users which is filtered by page number and page size + sort them too
+  const filteredUsersArray = await usersRepository.getUserByFilteringAndSorting(
+    page_size,
+    firstOfData,
+    sortPath,
+    sortValue
+  );
+
+  const count = usersAllEveryone.length;
   const total_pages = Math.ceil(count / page_size);
   const has_previous_page = await previous_page(firstOfData);
   const has_next_page = await next_page(endOfData, count);
@@ -36,58 +67,37 @@ async function getUsers(number, size, search, sort) {
     data: [],
   };
 
-  const tempData = [];
-  for (let i = 0; i < users.length; i++) {
-    const user = users[i];
-    tempData.push({
-      id: user.id,
-      name: user.name,
-      email: user.email,
+  for (let MACHI = 0; MACHI < filteredUsersArray.length; MACHI++) {
+    const tempUserData = filteredUsersArray[MACHI];
+    tempDataStoraGE.push({
+      id: tempUserData.id,
+      name: tempUserData.name,
+      email: tempUserData.email,
     });
   }
 
-  if (searchPath === 'email') {
-    for (let i = 0; i < users.length; i++) {
-      if (tempData[i].email.includes(searchName)) {
-        const user = tempData[i];
+  for (let MACHI = 0; MACHI < filteredUsersArray.length; MACHI++) {
+    if (searchPath === 'email') {
+      if (tempDataStoraGE[MACHI].email.includes(searchName)) {
+        const filterData = tempDataStoraGE[MACHI];
         results.data.push({
-          id: user.id,
-          name: user.name,
-          email: user.email,
+          id: filterData.id,
+          name: filterData.name,
+          email: filterData.email,
         });
       }
-    }
-  }
-  if (searchPath === 'name') {
-    for (let i = 0; i < users.length; i++) {
-      if (tempData[i].name.includes(searchName)) {
-        const user = tempData[i];
+    } else if (searchPath === 'name') {
+      if (tempDataStoraGE[MACHI].name.includes(searchName)) {
+        const filterData = tempDataStoraGE[MACHI];
         results.data.push({
-          id: user.id,
-          name: user.name,
-          email: user.email,
+          id: filterData.id,
+          name: filterData.name,
+          email: filterData.email,
         });
       }
     }
   }
   return results;
-}
-
-/**
- * check if page_number or page_size or both are null so that it could be inserted default values
- * @param {Integer} number - page_number
- * @param {Integer} size  - page_size
- * @returns {Integer}
- */
-async function checkPage(number, size) {
-  const users = await usersRepository.getUsers();
-  if (number === undefined || size === undefined) {
-    number = 1;
-    size = users.length;
-    return [number, size];
-  } else {
-    return [number, size];
-  }
 }
 /**
  * Return true or false if there is previous page or not
@@ -112,14 +122,6 @@ async function next_page(endOfData, count) {
     return true;
   } else {
     return false;
-  }
-}
-
-async function checkSort(sort) {
-  if (sort === 'desc') {
-    return -1;
-  } else {
-    return 1;
   }
 }
 

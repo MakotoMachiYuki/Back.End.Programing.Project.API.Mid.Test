@@ -22,6 +22,13 @@ async function getUsers(request, response, next) {
       sort
     );
 
+    if (users === 'NoSearchValue') {
+      throw errorResponder(
+        errorTypes.NOT_FOUND,
+        'NO USERS FOUND IN THE DATABASE!'
+      );
+    }
+
     return response.status(200).json(users);
   } catch (error) {
     return next(error);

@@ -9,15 +9,13 @@ async function getUsers() {
   return User.find({});
 }
 
-async function getUsersLimit(limit, offset) {
-  return User.find({}).limit(limit).skip(offset);
-}
 //peak spaghetti code
 async function getUserByFilteringAndSorting(limit, offset, sortPath, sort) {
-  if (sortPath === 'name') {
-    return User.find({}).limit(limit).skip(offset).sort({ name: sort });
+  const sortValue = parseInt(sort);
+  if (sortPath == 'name') {
+    return User.find({}).limit(limit).skip(offset).sort({ name: sortValue });
   } else {
-    return User.find({}).limit(limit).skip(offset).sort({ email: sort });
+    return User.find({}).limit(limit).skip(offset).sort({ email: sortValue });
   }
 }
 
@@ -103,5 +101,4 @@ module.exports = {
   getUserByEmail,
   changePassword,
   getUserByFilteringAndSorting,
-  getUsersLimit,
 };
