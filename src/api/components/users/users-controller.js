@@ -30,6 +30,13 @@ async function getUsers(request, response, next) {
       );
     }
 
+    if (users === 'PageBeyond') {
+      throw errorResponder(
+        errorTypes.PAGE_NUMBER_SIZE,
+        'Page Number beyond the available pages'
+      );
+    }
+
     return response.status(200).json(users);
   } catch (error) {
     return next(error);

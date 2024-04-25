@@ -165,7 +165,7 @@ const errorTypes = {
     code: 'DB_ERROR',
   },
   PAGE_NUMBER_SIZE: {
-    description: 'Page_Number or Page_Size is over/below database size',
+    description: 'Page Number is invalid!',
     status: 500,
     code: 'PAGE_INVALID',
   },

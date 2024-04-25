@@ -1,4 +1,3 @@
-const { errorResponder, errorTypes } = require('../../../core/errors');
 const authenticationServices = require('./authentication-service');
 
 /**

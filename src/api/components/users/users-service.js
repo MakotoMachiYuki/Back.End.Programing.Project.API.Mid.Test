@@ -68,6 +68,10 @@ async function getUsers(
   const has_previous_page = await previous_page(firstOfData);
   const has_next_page = await next_page(endOfData, count);
 
+  if (page_number > total_pages) {
+    return 'PageBeyond';
+  }
+
   //initialize the pagination
   const paginationOfAllTheData = {
     page_number: page_number,
