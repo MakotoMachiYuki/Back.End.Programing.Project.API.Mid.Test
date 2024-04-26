@@ -167,7 +167,14 @@ async function previous_page(firstOfData) {
     return false;
   }
 }
-
+/**
+ * return all pages available from the database if the number of page isn't filled but page size is
+ * @param {Number} total_pages
+ * @param {Number} sizeofPages
+ * @param {String} searchSubString
+ * @param {String} sortSubString
+ * @returns {Array}
+ */
 async function printAllPage(
   total_pages,
   sizeofPages,
@@ -191,7 +198,7 @@ async function printAllPage(
 /**
  * Return true or false if there is next page or not
  * @param {Number} endOfData - last index of data to be push
- * @param {Integer} count - total users data
+ * @param {Number} count - total users data
  * @returns {Boolean}
  */
 async function next_page(endOfData, count) {

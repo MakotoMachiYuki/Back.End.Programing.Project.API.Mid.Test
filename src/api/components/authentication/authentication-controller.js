@@ -13,8 +13,8 @@ const { P } = require('pino');
 async function login(request, response, next) {
   const { email, password } = request.body;
 
+  //initialize all the variables for recording the time right now
   const timeRightNow = new Date();
-
   const yearS = timeRightNow.getYear().toString().split(1);
   const year = parseInt(yearS[1]);
   const month = timeRightNow.getMonth();
@@ -38,20 +38,21 @@ async function login(request, response, next) {
         email,
         time
       );
-
+      //when the attempts are below the limit attempt it will return the attempt count
       if (attemptDetail[0] == 'InvalidTry') {
         throw errorResponder(
           errorTypes.INVALID_PASSWORD,
           `${time} User ${email} failed to login!. Attempt =  ${attemptDetail[1]}`
         );
       }
+      //when the attempts reach the limit, it will return the minute left until the the user could try it again
       if (attemptDetail[0] == 'LimitReached') {
         throw errorResponder(
           errorTypes.INVALID_PASSWORD,
           `Limit Reached! Time left until you can try it again :) in ${attemptDetail[1]} minutes!`
         );
       }
-
+      //when the timer is finished, but if the password is still wrong after the last lockout, it will return this message
       if (attemptDetail == 'AttemptReset') {
         throw (
           (errorResponder(errorTypes.INVALID_PASSWORD),
@@ -59,7 +60,7 @@ async function login(request, response, next) {
         );
       }
     }
-
+    //if there's no email recorded in the user database, it'll return message no invalid email
     if (loginSuccess == 'NoUser') {
       throw errorResponder(
         errorTypes.INVALID_CREDENTIALS,

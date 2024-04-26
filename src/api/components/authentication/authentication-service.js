@@ -28,6 +28,7 @@ async function checkLoginCredentials(email, password, time) {
     const attempt = 0;
     const lockedTimer = 0;
 
+    //to check if user has ever login or not before
     const checkEmail = await authenticationRepository.getLoginDetail(email);
     if (checkEmail == null) {
       await authenticationRepository.createLoginDetail(
@@ -62,11 +63,18 @@ async function checkLoginCredentials(email, password, time) {
   return 'PasswordWrong';
 }
 
+/**
+ * Function that will check the attempts, the time, resetting it
+ * @param {String} email
+ * @param {String} time
+ * @returns {object}
+ */
 async function checkLoginAttempt(email, time) {
   let status = 'login failed';
-  const attemptLimit = 2;
-  const timeLimit = 2;
+  const attemptLimit = 5;
+  const timeLimit = 30; //30 minutes
 
+  //to  check if user has ever login or not before
   const checkEmail = await authenticationRepository.getLoginDetail(email);
   if (checkEmail == null) {
     await authenticationRepository.createLoginDetail(email, status, time, 0, 0);
@@ -75,6 +83,7 @@ async function checkLoginAttempt(email, time) {
   }
 
   const userLoginDetail = await authenticationRepository.getLoginDetail(email);
+  //everytime user input the wrong password, the total attempt from the database will be plus one
   const tempAttempt = parseInt(userLoginDetail.attempt) + 1;
 
   if (tempAttempt <= attemptLimit && userLoginDetail.lockedTimer === 0) {
@@ -88,6 +97,7 @@ async function checkLoginAttempt(email, time) {
 
     return ['InvalidTry', tempAttempt];
   }
+  //when the attempt is beyond the limit it will locked the account and record the time when it can be unlocked
   if (tempAttempt > attemptLimit) {
     if (userLoginDetail.lockedTimer === 0) {
       const tempStatus = 'locked';
@@ -101,6 +111,7 @@ async function checkLoginAttempt(email, time) {
       );
       return ['LimitReached', timeLimit];
     }
+    //it will give user timer update respone per minutes
     if (userLoginDetail.lockedTimer !== 0) {
       if (Date.now() <= userLoginDetail.lockedTimer) {
         const lockedTimer = userLoginDetail.lockedTimer;
@@ -118,6 +129,7 @@ async function checkLoginAttempt(email, time) {
 
         return ['LimitReached', timeLeft];
       }
+      //when the time right now is already past the lockedTimer, it will unlocked the acc and reset the login attempts
       if (Date.now() > userLoginDetail.lockedTimer) {
         const tempstatus = 'unlocked';
         await authenticationRepository.updateLoginDetail(
@@ -133,6 +145,12 @@ async function checkLoginAttempt(email, time) {
   }
 }
 
+/**
+ * function that will check if the user has an attempted try to login or not, and check the time
+ * if it's already beyond 30 minutes, then it'll reset the attempts
+ * @param {String} email
+ * @param {String} time
+ */
 async function checkLoginTime(email, time) {
   const tempTimeStorageNow = time.split(/[-: ]/);
   const [hour, minute] = [tempTimeStorageNow[3], tempTimeStorageNow[4]];
@@ -146,11 +164,12 @@ async function checkLoginTime(email, time) {
 
   const timeDB = DBhour * 60 + DBminute;
 
+  //if time right now is like 1 am and the time in db is 23 pm it will give the time right now the correct total minutes
   if (timeNow < timeDB) {
     timeNow = timeNow + 24 * 60;
   }
 
-  if (timeNow - timeDB > 2) {
+  if (timeNow - timeDB > 30) {
     await authenticationRepository.updateLoginDetail(
       email,
       'not login in',
