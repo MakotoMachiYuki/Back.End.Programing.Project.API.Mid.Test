@@ -22,8 +22,30 @@ async function getUsers(
   const tempDataStoraGE = [];
 
   //if number of page is null
-  if (numberOfPages == null) {
+  if (numberOfPages == null && sizeofPages !== null) {
+    const tempTotalPage = Math.ceil(usersAllEveryone.length / sizeofPages);
+    const tempResult = await printAllPage(
+      tempTotalPage,
+      sizeofPages,
+      searchSubString,
+      sortSubString
+    );
+
+    const result = [];
+    for (let i = 0; i <= tempTotalPage; i++) {
+      if (tempResult[i] != null) {
+        result.push(tempResult[i]);
+      }
+    }
+    return result;
+  }
+
+  if (
+    (sizeofPages == null && numberOfPages == null) ||
+    (sizeofPages == null && numberOfPages != null)
+  ) {
     numberOfPages = 1;
+    sizeofPages = usersAllEveryone.length;
   }
 
   //initialize the page_number and page_size variable
@@ -59,6 +81,12 @@ async function getUsers(
     sortValue = -1;
   }
 
+  //asssigning specific values to all the variables below
+  const count = usersAllEveryone.length;
+  const total_pages = Math.ceil(count / page_size);
+  const has_previous_page = await previous_page(firstOfData);
+  const has_next_page = await next_page(endOfData, count);
+
   //get the users which is filtered by page number and page size + sort them too
   const filteredUsersArray = await usersRepository.getUserByFilteringAndSorting(
     page_size,
@@ -66,12 +94,6 @@ async function getUsers(
     sortPath,
     sortValue
   );
-
-  //asssigning specific values to all the variables below
-  const count = usersAllEveryone.length;
-  const total_pages = Math.ceil(count / page_size);
-  const has_previous_page = await previous_page(firstOfData);
-  const has_next_page = await next_page(endOfData, count);
 
   if (page_number > total_pages) {
     return 'PageBeyond';
@@ -145,6 +167,27 @@ async function previous_page(firstOfData) {
     return false;
   }
 }
+
+async function printAllPage(
+  total_pages,
+  sizeofPages,
+  searchSubString,
+  sortSubString
+) {
+  const testTemp = [];
+
+  for (let i = 1; i <= total_pages; i++) {
+    testTemp[i] = await getUsers(
+      i,
+      sizeofPages,
+      searchSubString,
+      sortSubString
+    );
+  }
+
+  return testTemp;
+}
+
 /**
  * Return true or false if there is next page or not
  * @param {Number} endOfData - last index of data to be push

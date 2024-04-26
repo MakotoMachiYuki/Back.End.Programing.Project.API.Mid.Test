@@ -137,7 +137,7 @@ async function checkLoginTime(email, time) {
   const tempTimeStorageNow = time.split(/[-: ]/);
   const [hour, minute] = [tempTimeStorageNow[3], tempTimeStorageNow[4]];
 
-  const timeNow = hour * 60 + minute;
+  let timeNow = hour * 60 + minute;
 
   const userLoginDetail = await authenticationRepository.getLoginDetail(email);
   const tempVariable = userLoginDetail.time;
