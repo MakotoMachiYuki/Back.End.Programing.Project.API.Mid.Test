@@ -9,8 +9,8 @@ const { errorResponder, errorTypes } = require('../../../core/errors');
  * @returns {object} Response object or pass an error to the next route
  */
 async function getUsers(request, response, next) {
-  const page_number = parseInt(request.query.page_number);
-  const page_size = parseInt(request.query.page_size);
+  const page_number = parseInt(request.query.page_number) || null;
+  const page_size = parseInt(request.query.page_size) || null;
   const search = request.query.search;
   const sort = request.query.sort;
 

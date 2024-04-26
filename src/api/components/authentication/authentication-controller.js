@@ -1,4 +1,6 @@
 const authenticationServices = require('./authentication-service');
+const { errorResponder, errorTypes } = require('../../../core/errors');
+const { P } = require('pino');
 
 /**
  * Handle login request
@@ -8,61 +10,63 @@ const authenticationServices = require('./authentication-service');
  * @returns {object} Response object or pass an error to the next route
  */
 
-//initialize all required variables
-let loginAttempts = 0;
-const maxAttempts = 5;
-let accountLocked = false;
-let lockedTimer = null;
-const timeLimit = 30; // in minutes
 async function login(request, response, next) {
   const { email, password } = request.body;
 
+  const timeRightNow = new Date();
+
+  const yearS = timeRightNow.getYear().toString().split(1);
+  const year = parseInt(yearS[1]);
+  const month = timeRightNow.getMonth();
+  const date = timeRightNow.getDate();
+  const hour = timeRightNow.getHours();
+  const minutes = timeRightNow.getMinutes();
+  const seconds = timeRightNow.getSeconds();
+  const time = `[20${year}-${month}-${date} ${hour}:${minutes}:${seconds}]`;
+
   try {
-    //check if the account is locked and the time right now is below than the locked timer
-    if (accountLocked && Date.now() < lockedTimer) {
-      //reseting the login Attempts
-      loginAttempts = 0;
-      //checking how much times left
-      const timeLeft = Math.ceil((lockedTimer - Date.now()) / (1000 * 60));
-
-      return response.status(403).json({
-        error: `Too Many Login Attempts! ${timeLeft} minutes left until you can try it again :)`,
-      });
-    }
-    //if the time right now over the locked timer then the login attempts will be reseted and account will be unlocked
-    if (accountLocked && Date.now() > lockedTimer) {
-      //reseting the login Attempts
-      loginAttempts = 0;
-      accountLocked = false;
-    }
-
-    //locked the account and set the locked timer based on the time right now times the timelimit
-    if (loginAttempts >= maxAttempts) {
-      accountLocked = true;
-      lockedTimer = Date.now() + 1000 * 60 * timeLimit;
-
-      return response.status(403).json({
-        error: `Attempts Limit Reached! Now account lock down for ${timeLimit} minutes! :)`,
-      });
-    }
-
     // Check login credentials
     const loginSuccess = await authenticationServices.checkLoginCredentials(
       email,
-      password
+      password,
+      time
     );
 
-    if (!loginSuccess) {
-      //every fail login will result loginAttempts plus 1
-      loginAttempts += 1;
+    if (loginSuccess == 'PasswordWrong') {
+      await authenticationServices.checkLoginTime(email, time);
+      const attemptDetail = await authenticationServices.checkLoginAttempt(
+        email,
+        time
+      );
 
-      return response.status(403).json({
-        error: `Invalid email or password!. Please try again! Attempts: ${loginAttempts}`,
-      });
+      if (attemptDetail[0] == 'InvalidTry') {
+        throw errorResponder(
+          errorTypes.INVALID_PASSWORD,
+          `${time} User ${email} failed to login!. Attempt =  ${attemptDetail[1]}`
+        );
+      }
+      if (attemptDetail[0] == 'LimitReached') {
+        throw errorResponder(
+          errorTypes.INVALID_PASSWORD,
+          `Limit Reached! Time left until you can try it again :) in ${attemptDetail[1]} minutes!`
+        );
+      }
+
+      if (attemptDetail == 'AttemptReset') {
+        throw (
+          (errorResponder(errorTypes.INVALID_PASSWORD),
+          'Your attempts are reseted! goodluck!')
+        );
+      }
     }
 
-    //successful login will rest loginAttempts back to 0
-    loginAttempts = 0;
+    if (loginSuccess == 'NoUser') {
+      throw errorResponder(
+        errorTypes.INVALID_CREDENTIALS,
+        'Invalid Email! Check your email again!'
+      );
+    }
+
     return response.status(200).json(loginSuccess);
   } catch (error) {
     return next(error);

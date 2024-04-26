@@ -3,6 +3,7 @@ const config = require('../core/config');
 const logger = require('../core/logger')('app');
 
 const usersSchema = require('./users-schema');
+const loginDetailSchema = require('./loginDetail-schema');
 
 mongoose.connect(`${config.database.connection}/${config.database.name}`, {
   useNewUrlParser: true,
@@ -14,8 +15,13 @@ db.once('open', () => {
 });
 
 const User = mongoose.model('users', mongoose.Schema(usersSchema));
+const loginDetail = mongoose.model(
+  'loginDetail',
+  mongoose.Schema(loginDetailSchema)
+);
 
 module.exports = {
   mongoose,
   User,
+  loginDetail,
 };

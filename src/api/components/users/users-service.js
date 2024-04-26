@@ -21,6 +21,11 @@ async function getUsers(
   //initialize temporary array that will be used later
   const tempDataStoraGE = [];
 
+  //if number of page is null
+  if (numberOfPages == null) {
+    numberOfPages = 1;
+  }
+
   //initialize the page_number and page_size variable
   const [page_number, page_size] = [numberOfPages, sizeofPages];
 
