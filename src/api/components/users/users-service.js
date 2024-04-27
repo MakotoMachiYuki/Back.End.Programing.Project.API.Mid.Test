@@ -167,6 +167,21 @@ async function previous_page(firstOfData) {
     return false;
   }
 }
+
+/**
+ * Return true or false if there is next page or not
+ * @param {Number} endOfData - last index of data to be push
+ * @param {Number} count - total users data
+ * @returns {Boolean}
+ */
+async function next_page(endOfData, count) {
+  if (endOfData <= count) {
+    return true;
+  } else {
+    return false;
+  }
+}
+
 /**
  * return all pages available from the database if the number of page isn't filled but page size is
  * @param {Number} total_pages
@@ -193,20 +208,6 @@ async function printAllPage(
   }
 
   return testTemp;
-}
-
-/**
- * Return true or false if there is next page or not
- * @param {Number} endOfData - last index of data to be push
- * @param {Number} count - total users data
- * @returns {Boolean}
- */
-async function next_page(endOfData, count) {
-  if (endOfData <= count) {
-    return true;
-  } else {
-    return false;
-  }
 }
 
 /**
