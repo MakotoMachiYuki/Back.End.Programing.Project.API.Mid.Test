@@ -1,5 +1,5 @@
-const authenticationServices = require('./authentication-service');
-const { errorResponder, errorTypes } = require('../../../core/errors');
+const bankingAuthService = require('./bankingAuth-service');
+const { errorResponder, errorTypes } = require('../../../../core/errors');
 
 /**
  * Handle login request
@@ -9,8 +9,8 @@ const { errorResponder, errorTypes } = require('../../../core/errors');
  * @returns {object} Response object or pass an error to the next route
  */
 
-async function login(request, response, next) {
-  const { email, password } = request.body;
+async function accountlogin(request, response, next) {
+  const { userName, password } = request.body;
 
   //initialize all the variables for recording the time right now
   const timeRightNow = new Date();
@@ -25,23 +25,23 @@ async function login(request, response, next) {
 
   try {
     // Check login credentials
-    const loginSuccess = await authenticationServices.checkLoginCredentials(
-      email,
+    const loginSuccess = await bankingAuthService.checkAccountLoginCredentials(
+      userName,
       password,
       time
     );
 
     if (loginSuccess == 'PasswordWrong') {
-      await authenticationServices.checkLoginTime(email, time);
-      const attemptDetail = await authenticationServices.checkLoginAttempt(
-        email,
+      await bankingAuthService.checkAccountLoginTime(userName, time);
+      const attemptDetail = await bankingAuthService.checkAccountLoginAttempt(
+        userName,
         time
       );
       //when the attempts are below the limit attempt it will return the attempt count
       if (attemptDetail[0] == 'InvalidTry') {
         throw errorResponder(
           errorTypes.INVALID_PASSWORD,
-          `${time} User ${email} failed to login!. Attempt =  ${attemptDetail[1]}`
+          `${time} User ${userName} failed to login!. Attempt =  ${attemptDetail[1]}`
         );
       }
       //when the attempts reach the limit, it will return the minute left until the the user could try it again
@@ -60,10 +60,10 @@ async function login(request, response, next) {
       }
     }
     //if there's no email recorded in the user database, it'll return message no invalid email
-    if (loginSuccess == 'NoUser') {
+    if (loginSuccess == 'Noaccount') {
       throw errorResponder(
         errorTypes.INVALID_CREDENTIALS,
-        'Invalid Email! Check your email again!'
+        'Invalid Username! Check your Username again!'
       );
     }
 
@@ -74,5 +74,5 @@ async function login(request, response, next) {
 }
 
 module.exports = {
-  login,
+  accountlogin,
 };

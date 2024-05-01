@@ -1,7 +1,6 @@
 const authenticationRepository = require('./authentication-repository');
 const { generateToken } = require('../../../utils/session-token');
 const { passwordMatched } = require('../../../utils/password');
-const { P } = require('pino');
 
 /**
  * Check username and password for login.

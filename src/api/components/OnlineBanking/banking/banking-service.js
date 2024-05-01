@@ -1,29 +1,19 @@
-const usersRepository = require('./users-repository');
-const { hashPassword, passwordMatched } = require('../../../utils/password');
+const accountsRepository = require('./banking-repository');
+const { hashPassword, passwordMatched } = require('../../../../utils/password');
 
-/**
- * Get list of users and returns with pagination
- * @param {Integer} numberOfPages - page_number
- * @param {Integer} sizeofPages - page_size
- * @param {Integer} searchSubString - search
- * @param {Integer} sortSubString - sort
- * @returns {Array}
- */
-async function getUsers(
+async function getAccounts(
   numberOfPages,
   sizeofPages,
   searchSubString,
   sortSubString
 ) {
-  //get all users in the database
-  const usersAllEveryone = await usersRepository.getUsers();
+  const accountsAllEveryone = await accountsRepository.getAccounts();
 
-  //initialize temporary array that will be used later
   const tempDataStoraGE = [];
 
   //if number of page is null
   if (numberOfPages == null && sizeofPages !== null) {
-    const tempTotalPage = Math.ceil(usersAllEveryone.length / sizeofPages);
+    const tempTotalPage = Math.ceil(accountsAllEveryone.length / sizeofPages);
     const tempResult = await printAllPage(
       tempTotalPage,
       sizeofPages,
@@ -31,13 +21,13 @@ async function getUsers(
       sortSubString
     );
 
-    const result = [];
+    const results = [];
     for (let i = 0; i <= tempTotalPage; i++) {
       if (tempResult[i] != null) {
-        result.push(tempResult[i]);
+        results.push(tempResult[i]);
       }
     }
-    return result;
+    return results;
   }
 
   if (
@@ -45,7 +35,7 @@ async function getUsers(
     (sizeofPages == null && numberOfPages != null)
   ) {
     numberOfPages = 1;
-    sizeofPages = usersAllEveryone.length;
+    sizeofPages = accountsAllEveryone.length;
   }
 
   //initialize the page_number and page_size variable
@@ -82,18 +72,19 @@ async function getUsers(
   }
 
   //asssigning specific values to all the variables below
-  const count = usersAllEveryone.length;
+  const count = accountsAllEveryone.length;
   const total_pages = Math.ceil(count / page_size);
   const has_previous_page = await previous_page(firstOfData);
   const has_next_page = await next_page(endOfData, count);
 
   //get the users which is filtered by page number and page size + sort them too
-  const filteredUsersArray = await usersRepository.getUserByFilteringAndSorting(
-    page_size,
-    firstOfData,
-    sortPath,
-    sortValue
-  );
+  const filteredAccountArray =
+    await accountsRepository.getAccountByFilteringAndSorting(
+      page_size,
+      firstOfData,
+      sortPath,
+      sortValue
+    );
 
   if (page_number > total_pages) {
     return 'PageBeyond';
@@ -110,19 +101,23 @@ async function getUsers(
     data: [],
   };
 
-  //inputting the data to the temporary array storage
-  for (let MACHI = 0; MACHI < filteredUsersArray.length; MACHI++) {
-    const tempUserData = filteredUsersArray[MACHI];
+  for (let MACHI = 0; MACHI < filteredAccountArray.length; MACHI++) {
+    const tempAccountData = filteredAccountArray[MACHI];
     tempDataStoraGE.push({
-      id: tempUserData.id,
-      name: tempUserData.name,
-      email: tempUserData.email,
+      id: tempAccountData.id,
+      name: tempAccountData.name,
+      userName: tempAccountData.userName,
+      email: tempAccountData.email,
+      address: tempAccountData.address,
+      city: tempAccountData.city,
+      phoneNumber: tempAccountData.phoneNumber,
+      balance: tempAccountData.balance,
     });
   }
 
   //filter the data by .includes() function and all lowercase by the given searchPath and searchName
   let MACHI = 0;
-  while (MACHI < filteredUsersArray.length) {
+  while (MACHI < filteredAccountArray.length) {
     if (searchPath === 'email') {
       if (
         tempDataStoraGE[MACHI].email
@@ -133,7 +128,12 @@ async function getUsers(
         paginationOfAllTheData.data.push({
           id: filterData.id,
           name: filterData.name,
+          userName: filterData.userName,
           email: filterData.email,
+          address: filterData.address,
+          city: filterData.city,
+          phoneNumber: filterData.phoneNumber,
+          balance: filterData.balance,
         });
       }
     } else if (searchPath === 'name') {
@@ -146,7 +146,12 @@ async function getUsers(
         paginationOfAllTheData.data.push({
           id: filterData.id,
           name: filterData.name,
+          userName: filterData.userName,
           email: filterData.email,
+          address: filterData.address,
+          city: filterData.city,
+          phoneNumber: filterData.phoneNumber,
+          balance: filterData.balance,
         });
       }
     }
@@ -167,6 +172,7 @@ async function previous_page(firstOfData) {
     return false;
   }
 }
+
 /**
  * Return true or false if there is next page or not
  * @param {Number} endOfData - last index of data to be push
@@ -180,7 +186,6 @@ async function next_page(endOfData, count) {
     return false;
   }
 }
-
 /**
  * return all pages available from the database if the number of page isn't filled but page size is
  * @param {Number} total_pages
@@ -198,7 +203,7 @@ async function printAllPage(
   const testTemp = [];
 
   for (let i = 1; i <= total_pages; i++) {
-    testTemp[i] = await getUsers(
+    testTemp[i] = await getAccounts(
       i,
       sizeofPages,
       searchSubString,
@@ -209,85 +214,30 @@ async function printAllPage(
   return testTemp;
 }
 
-/**
- * Get user detail
- * @param {string} id - User ID
- * @returns {Object}
- */
-async function getUser(id) {
-  const user = await usersRepository.getUser(id);
-
-  // User not found
-  if (!user) {
-    return null;
-  }
-
-  return {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-  };
-}
-
-/**
- * Create new user
- * @param {string} name - Name
- * @param {string} email - Email
- * @param {string} password - Password
- * @returns {boolean}
- */
-async function createUser(name, email, password) {
+async function createAccount(
+  name,
+  userName,
+  email,
+  password,
+  address,
+  city,
+  phoneNumber
+) {
   // Hash password
   const hashedPassword = await hashPassword(password);
 
   try {
-    await usersRepository.createUser(name, email, hashedPassword);
-  } catch (err) {
-    return null;
-  }
-
-  return true;
-}
-
-/**
- * Update existing user
- * @param {string} id - User ID
- * @param {string} name - Name
- * @param {string} email - Email
- * @returns {boolean}
- */
-async function updateUser(id, name, email) {
-  const user = await usersRepository.getUser(id);
-
-  // User not found
-  if (!user) {
-    return null;
-  }
-
-  try {
-    await usersRepository.updateUser(id, name, email);
-  } catch (err) {
-    return null;
-  }
-
-  return true;
-}
-
-/**
- * Delete user
- * @param {string} id - User ID
- * @returns {boolean}
- */
-async function deleteUser(id) {
-  const user = await usersRepository.getUser(id);
-
-  // User not found
-  if (!user) {
-    return null;
-  }
-
-  try {
-    await usersRepository.deleteUser(id);
+    const balance = 0;
+    await accountsRepository.createAccount(
+      name,
+      userName,
+      email,
+      hashedPassword,
+      address,
+      city,
+      phoneNumber,
+      balance
+    );
   } catch (err) {
     return null;
   }
@@ -301,9 +251,9 @@ async function deleteUser(id) {
  * @returns {boolean}
  */
 async function emailIsRegistered(email) {
-  const user = await usersRepository.getUserByEmail(email);
+  const account = await accountsRepository.getAccountByEmail(email);
 
-  if (user) {
+  if (account) {
     return true;
   }
 
@@ -311,51 +261,23 @@ async function emailIsRegistered(email) {
 }
 
 /**
- * Check whether the password is correct
- * @param {string} userId - User ID
- * @param {string} password - Password
+ * Check whether the userName is registered
+ * @param {string} userName - userName
  * @returns {boolean}
  */
-async function checkPassword(userId, password) {
-  const user = await usersRepository.getUser(userId);
-  return passwordMatched(password, user.password);
-}
+async function userNameIsRegistered(userName) {
+  const account = await accountsRepository.getAccountByUserName(userName);
 
-/**
- * Change user password
- * @param {string} userId - User ID
- * @param {string} password - Password
- * @returns {boolean}
- */
-async function changePassword(userId, password) {
-  const user = await usersRepository.getUser(userId);
-
-  // Check if user not found
-  if (!user) {
-    return null;
+  if (account) {
+    return true;
   }
 
-  const hashedPassword = await hashPassword(password);
-
-  const changeSuccess = await usersRepository.changePassword(
-    userId,
-    hashedPassword
-  );
-
-  if (!changeSuccess) {
-    return null;
-  }
-
-  return true;
+  return false;
 }
 
 module.exports = {
-  getUsers,
-  getUser,
-  createUser,
-  updateUser,
-  deleteUser,
+  getAccounts,
+  createAccount,
   emailIsRegistered,
-  checkPassword,
-  changePassword,
+  userNameIsRegistered,
 };

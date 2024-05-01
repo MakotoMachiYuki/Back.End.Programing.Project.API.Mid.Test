@@ -1,4 +1,3 @@
-const { P } = require('pino');
 const { User } = require('../../../models');
 
 /**
