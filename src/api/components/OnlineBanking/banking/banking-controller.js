@@ -1,11 +1,13 @@
 const accountService = require('./banking-service');
 const { errorResponder, errorTypes } = require('../../../../core/errors');
+const { P } = require('pino');
 
 async function getAccounts(request, response, next) {
   const page_number = parseInt(request.query.page_number) || null;
   const page_size = parseInt(request.query.page_size) || null;
   const search = request.query.search;
   const sort = request.query.sort;
+
   try {
     const accounts = await accountService.getAccounts(
       page_number,
@@ -17,8 +19,14 @@ async function getAccounts(request, response, next) {
     if (accounts === 'NoSearchValue') {
       throw errorResponder(
         errorTypes.NOT_FOUND,
-        'NO USERS FOUND IN THE DATABASE!',
+        'NO USERS FOUNDED IN THE DATABASE!',
         'Required search query on the parameter!'
+      );
+    }
+    if (accounts === 'NoUserWithRequestSearch') {
+      throw errorResponder(
+        errorTypes.NOT_FOUND,
+        'NO USERS WITH REQUEST SEARCH FOUNDED IN THE DATABASE!'
       );
     }
 
@@ -43,7 +51,7 @@ async function createAccount(request, response, next) {
     const password = request.body.password;
     const password_confirm = request.body.password_confirm;
     const address = request.body.address;
-    const city = request.body.address;
+    const city = request.body.city;
     const phoneNumber = request.body.phoneNumber;
 
     if (password !== password_confirm) {
@@ -58,7 +66,7 @@ async function createAccount(request, response, next) {
     if (userNameIsRegistered) {
       throw errorResponder(
         errorTypes.USERNAME_ALREADY_TAKEN,
-        'UserName is already registered'
+        'UserName is already registered, must be unique!'
       );
     }
     const emailIsRegistered = await accountService.emailIsRegistered(email);
@@ -66,6 +74,14 @@ async function createAccount(request, response, next) {
       throw errorResponder(
         errorTypes.EMAIL_ALREADY_TAKEN,
         'Email is already registered'
+      );
+    }
+    const phoneNumberIsRegistered =
+      await accountService.phoneNumberIsRegistered(phoneNumber);
+    if (phoneNumberIsRegistered) {
+      throw errorResponder(
+        errorTypes.PHONENUMBER_ALREADY_TAKEN,
+        'Phone Number is already registered'
       );
     }
 
@@ -94,7 +110,129 @@ async function createAccount(request, response, next) {
   }
 }
 
+async function getAccount(request, response, next) {
+  try {
+    const account = await accountService.getAccount(request.params.id);
+    if (!account) {
+      throw errorResponder(errorTypes.UNPROCESSABLE_ENTITY, 'Unknown Account');
+    }
+    return response.status(200).json(account);
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function deleteAccount(request, response, next) {
+  try {
+    const id = request.params.id;
+
+    const success = await accountService.deleteAccount(id);
+    if (!success) {
+      throw errorResponder(
+        errorTypes.UNPROCESSABLE_ENTITY,
+        'Failed to Delete Account!'
+      );
+    }
+
+    const account = await accountService.getAccount(id);
+    const userName = account.userName;
+    const successMessage = `Account with ID ${id} and USERNAME: ${userName} has been successfully deleted! `;
+    return response.status(200).json({ successMessage });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updateAccount(request, response, next) {
+  const id = request.params.id;
+  const name = request.body.name || null;
+  const email = request.body.email || null;
+  const address = request.body.address || null;
+  const city = request.body.city || null;
+  const phoneNumber = request.body.phoneNumber || null;
+
+  try {
+    const emailIsRegistered = await accountService.emailIsRegistered(email);
+    if (emailIsRegistered) {
+      throw errorResponder(
+        errorTypes.EMAIL_ALREADY_TAKEN,
+        'Email is already registered'
+      );
+    }
+    const phoneNumberIsRegistered =
+      await accountService.phoneNumberIsRegistered(phoneNumber);
+    if (phoneNumberIsRegistered) {
+      throw errorResponder(
+        errorTypes.PHONENUMBER_ALREADY_TAKEN,
+        'Phone Number is already registered'
+      );
+    }
+
+    const updateAccount = await accountService.updateAccount(
+      id,
+      name,
+      email,
+      address,
+      city,
+      phoneNumber
+    );
+
+    if (updateAccount === 'NoAccount') {
+      throw errorResponder(errorTypes.NOT_FOUND, 'Unknown Account');
+    }
+    if (!updateAccount) {
+      throw errorResponder(
+        errorTypes.UNPROCESSABLE_ENTITY,
+        'Failed to update Account!'
+      );
+    }
+
+    const successMessage = `Account ${id} has been successfully updated!`;
+    return response.status(200).json({ successMessage });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function updatePassword(request, response, next) {
+  const id = request.params.id;
+  const password_old = request.body.password_old;
+  const password_new = request.body.password_new;
+  const password_confirm = request.body.password_confirm;
+
+  try {
+    const checkPassword = await accountService.checkPassword(id, password_old);
+    console.log(checkPassword);
+    if (!checkPassword) {
+      throw errorResponder(errorTypes.INVALID_PASSWORD, 'Wrong Password!');
+    }
+
+    if (password_new !== password_confirm) {
+      throw errorResponder(
+        errorTypes.INVALID_PASSWORD,
+        'Password confirmation mismathced!'
+      );
+    }
+
+    const successChange = await accountService.changePassword(id, password_new);
+    if (!successChange) {
+      throw errorResponder(
+        errorTypes.UNPROCESSABLE_ENTITY,
+        'Failed to change the password!'
+      );
+    }
+
+    return response.status(200).json({ id, password_new });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   getAccounts,
+  getAccount,
   createAccount,
+  deleteAccount,
+  updatePassword,
+  updateAccount,
 };

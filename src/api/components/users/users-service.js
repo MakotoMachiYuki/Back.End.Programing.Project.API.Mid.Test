@@ -1,5 +1,6 @@
 const usersRepository = require('./users-repository');
 const { hashPassword, passwordMatched } = require('../../../utils/password');
+const { Account } = require('../../../models');
 
 /**
  * Get list of users and returns with pagination
@@ -17,28 +18,6 @@ async function getUsers(
 ) {
   //get all users in the database
   const usersAllEveryone = await usersRepository.getUsers();
-
-  //initialize temporary array that will be used later
-  const tempDataStoraGE = [];
-
-  //if number of page is null
-  if (numberOfPages == null && sizeofPages !== null) {
-    const tempTotalPage = Math.ceil(usersAllEveryone.length / sizeofPages);
-    const tempResult = await printAllPage(
-      tempTotalPage,
-      sizeofPages,
-      searchSubString,
-      sortSubString
-    );
-
-    const result = [];
-    for (let i = 0; i <= tempTotalPage; i++) {
-      if (tempResult[i] != null) {
-        result.push(tempResult[i]);
-      }
-    }
-    return result;
-  }
 
   if (
     (sizeofPages == null && numberOfPages == null) ||
@@ -68,6 +47,28 @@ async function getUsers(
     return 'NoSearchValue';
   }
 
+  //if number of page is null
+  if (numberOfPages == null && sizeofPages !== null) {
+    const tempTotalPage = Math.ceil(usersAllEveryone.length / sizeofPages);
+    const tempResult = await printAllPage(
+      tempTotalPage,
+      sizeofPages,
+      searchSubString,
+      sortSubString
+    );
+
+    const results = [];
+    for (let i = 0; i <= tempTotalPage; i++) {
+      if (tempResult[i] === 'NoUserWithRequestSearch') {
+        return 'NoUserWithRequestSearch';
+      }
+      if (tempResult[i] != null) {
+        results.push(tempResult[i]);
+      }
+    }
+    return results;
+  }
+
   //assigning sorting (email(default)/name)
   if (sortSubString == null) {
     sortSubString = '=email:asc';
@@ -81,22 +82,27 @@ async function getUsers(
     sortValue = -1;
   }
 
+  //get the users which is filtered by page number and page size + sort them too
+  const filteredUsersArray = await usersRepository.getUserByFilteringAndSorting(
+    page_size,
+    firstOfData,
+    sortPath,
+    sortValue,
+    searchPath,
+    searchName
+  );
+
   //asssigning specific values to all the variables below
   const count = usersAllEveryone.length;
   const total_pages = Math.ceil(count / page_size);
   const has_previous_page = await previous_page(firstOfData);
   const has_next_page = await next_page(endOfData, count);
 
-  //get the users which is filtered by page number and page size + sort them too
-  const filteredUsersArray = await usersRepository.getUserByFilteringAndSorting(
-    page_size,
-    firstOfData,
-    sortPath,
-    sortValue
-  );
-
   if (page_number > total_pages) {
     return 'PageBeyond';
+  }
+  if (filteredUsersArray.length == 0) {
+    return 'NoUserWithRequestSearch';
   }
 
   //initialize the pagination
@@ -110,47 +116,13 @@ async function getUsers(
     data: [],
   };
 
-  //inputting the data to the temporary array storage
   for (let MACHI = 0; MACHI < filteredUsersArray.length; MACHI++) {
     const tempUserData = filteredUsersArray[MACHI];
-    tempDataStoraGE.push({
+    paginationOfAllTheData.data.push({
       id: tempUserData.id,
       name: tempUserData.name,
       email: tempUserData.email,
     });
-  }
-
-  //filter the data by .includes() function and all lowercase by the given searchPath and searchName
-  let MACHI = 0;
-  while (MACHI < filteredUsersArray.length) {
-    if (searchPath === 'email') {
-      if (
-        tempDataStoraGE[MACHI].email
-          .toLowerCase()
-          .includes(searchName.toLowerCase())
-      ) {
-        const filterData = tempDataStoraGE[MACHI];
-        paginationOfAllTheData.data.push({
-          id: filterData.id,
-          name: filterData.name,
-          email: filterData.email,
-        });
-      }
-    } else if (searchPath === 'name') {
-      if (
-        tempDataStoraGE[MACHI].name
-          .toLowerCase()
-          .includes(searchName.toLowerCase())
-      ) {
-        const filterData = tempDataStoraGE[MACHI];
-        paginationOfAllTheData.data.push({
-          id: filterData.id,
-          name: filterData.name,
-          email: filterData.email,
-        });
-      }
-    }
-    MACHI += 1;
   }
 
   return paginationOfAllTheData;

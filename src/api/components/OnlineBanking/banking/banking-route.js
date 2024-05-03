@@ -13,10 +13,41 @@ module.exports = (app) => {
 
   route.post(
     '/',
-    AdminAuthenticationMiddleWare,
     celebrate(accountValidators.createAccount),
     accountControllers.createAccount
   );
 
   route.get('/', AdminAuthenticationMiddleWare, accountControllers.getAccounts);
+
+  route.get(
+    '/:id',
+    AccountAuthenticationMiddleware,
+    accountControllers.getAccount
+  );
+
+  route.delete(
+    '/:id',
+    AccountAuthenticationMiddleware,
+    accountControllers.deleteAccount
+  );
+
+  route.post(
+    '/:id/change-password',
+    AccountAuthenticationMiddleware,
+    celebrate(accountValidators.changePassword),
+    accountControllers.updatePassword
+  );
+
+  route.put(
+    '/:id/update-account',
+    AccountAuthenticationMiddleware,
+    celebrate(accountValidators.updateAccount),
+    accountControllers.updateAccount
+  );
+
+  route.patch('/:id/deposit/');
+
+  route.patch('/:id/withdraw/');
+
+  route.put('/:id/transfer/');
 };

@@ -4,6 +4,10 @@ const joiPassword = joi.extend(joiPasswordExtendCore);
 
 module.exports = {
   createUser: {
+    query: {
+      page_number: joi.number().integer().greater(0).label('Page Number'),
+      page_size: joi.number().integer().greater(0).label('Page Size'),
+    },
     body: {
       name: joi.string().min(1).max(100).required().label('Name'),
       email: joi.string().email().required().label('Email'),

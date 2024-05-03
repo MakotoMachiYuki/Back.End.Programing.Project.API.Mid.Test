@@ -10,6 +10,7 @@ async function getUsers() {
 
 /**
  * get a list of users by the limit of page size, where the data started (offset)
+ * plus filter the data by finding the substring by using regex
  * @param {Integer} limitOfDataValue - page Size
  * @param {Integer} offsetOfDataValue - where the data started
  * @param {Integer} sortPathOfDataValue - path for sorting
@@ -20,19 +21,38 @@ async function getUserByFilteringAndSorting(
   limitOfDataValue,
   offsetOfDataValue,
   sortPathOfDataValue,
-  sortOfDataValue
+  sortOfDataValue,
+  searchPath,
+  searchName
 ) {
   const sortValueOfDataValue = parseInt(sortOfDataValue);
-  if (sortPathOfDataValue == 'name') {
-    return User.find({})
-      .limit(limitOfDataValue)
-      .skip(offsetOfDataValue)
-      .sort({ name: sortValueOfDataValue });
-  } else {
-    return User.find({})
-      .limit(limitOfDataValue)
-      .skip(offsetOfDataValue)
-      .sort({ email: sortValueOfDataValue });
+  const regexName = new RegExp(searchName, 'i');
+
+  if (searchPath === 'email') {
+    if (sortPathOfDataValue == 'name') {
+      return User.find({ email: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ name: sortValueOfDataValue });
+    } else {
+      return User.find({ email: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ email: sortValueOfDataValue });
+    }
+  }
+  if (searchPath === 'name') {
+    if (sortPathOfDataValue == 'name') {
+      return User.find({ name: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ name: sortValueOfDataValue });
+    } else {
+      return User.find({ name: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ email: sortValueOfDataValue });
+    }
   }
 }
 

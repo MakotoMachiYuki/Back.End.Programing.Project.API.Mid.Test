@@ -1,5 +1,6 @@
 const accountsRepository = require('./banking-repository');
 const { hashPassword, passwordMatched } = require('../../../../utils/password');
+const { P } = require('pino');
 
 async function getAccounts(
   numberOfPages,
@@ -8,27 +9,6 @@ async function getAccounts(
   sortSubString
 ) {
   const accountsAllEveryone = await accountsRepository.getAccounts();
-
-  const tempDataStoraGE = [];
-
-  //if number of page is null
-  if (numberOfPages == null && sizeofPages !== null) {
-    const tempTotalPage = Math.ceil(accountsAllEveryone.length / sizeofPages);
-    const tempResult = await printAllPage(
-      tempTotalPage,
-      sizeofPages,
-      searchSubString,
-      sortSubString
-    );
-
-    const results = [];
-    for (let i = 0; i <= tempTotalPage; i++) {
-      if (tempResult[i] != null) {
-        results.push(tempResult[i]);
-      }
-    }
-    return results;
-  }
 
   if (
     (sizeofPages == null && numberOfPages == null) ||
@@ -58,6 +38,27 @@ async function getAccounts(
     return 'NoSearchValue';
   }
 
+  //if number of page is null
+  if (numberOfPages == null && sizeofPages !== null) {
+    const tempTotalPage = Math.ceil(accountsAllEveryone.length / sizeofPages);
+    const tempResult = await printAllPage(
+      tempTotalPage,
+      sizeofPages,
+      searchSubString,
+      sortSubString
+    );
+
+    const results = [];
+    for (let i = 0; i <= tempTotalPage; i++) {
+      if (tempResult[i] === 'NoUserWithRequestSearch') {
+        return 'NoUserWithRequestSearch';
+      }
+      if (tempResult[i] != null) {
+        results.push(tempResult[i]);
+      }
+    }
+    return results;
+  }
   //assigning sorting (email(default)/name)
   if (sortSubString == null) {
     sortSubString = '=email:asc';
@@ -71,23 +72,28 @@ async function getAccounts(
     sortValue = -1;
   }
 
-  //asssigning specific values to all the variables below
-  const count = accountsAllEveryone.length;
-  const total_pages = Math.ceil(count / page_size);
-  const has_previous_page = await previous_page(firstOfData);
-  const has_next_page = await next_page(endOfData, count);
-
   //get the users which is filtered by page number and page size + sort them too
   const filteredAccountArray =
     await accountsRepository.getAccountByFilteringAndSorting(
       page_size,
       firstOfData,
       sortPath,
-      sortValue
+      sortValue,
+      searchPath,
+      searchName
     );
+
+  //asssigning specific values to all the variables below
+  const count = accountsAllEveryone.length;
+  const total_pages = Math.ceil(count / page_size);
+  const has_previous_page = await previous_page(firstOfData);
+  const has_next_page = await next_page(endOfData, count);
 
   if (page_number > total_pages) {
     return 'PageBeyond';
+  }
+  if (filteredAccountArray.length == 0) {
+    return 'NoUserWithRequestSearch';
   }
 
   //initialize the pagination
@@ -103,7 +109,7 @@ async function getAccounts(
 
   for (let MACHI = 0; MACHI < filteredAccountArray.length; MACHI++) {
     const tempAccountData = filteredAccountArray[MACHI];
-    tempDataStoraGE.push({
+    paginationOfAllTheData.data.push({
       id: tempAccountData.id,
       name: tempAccountData.name,
       userName: tempAccountData.userName,
@@ -113,49 +119,6 @@ async function getAccounts(
       phoneNumber: tempAccountData.phoneNumber,
       balance: tempAccountData.balance,
     });
-  }
-
-  //filter the data by .includes() function and all lowercase by the given searchPath and searchName
-  let MACHI = 0;
-  while (MACHI < filteredAccountArray.length) {
-    if (searchPath === 'email') {
-      if (
-        tempDataStoraGE[MACHI].email
-          .toLowerCase()
-          .includes(searchName.toLowerCase())
-      ) {
-        const filterData = tempDataStoraGE[MACHI];
-        paginationOfAllTheData.data.push({
-          id: filterData.id,
-          name: filterData.name,
-          userName: filterData.userName,
-          email: filterData.email,
-          address: filterData.address,
-          city: filterData.city,
-          phoneNumber: filterData.phoneNumber,
-          balance: filterData.balance,
-        });
-      }
-    } else if (searchPath === 'name') {
-      if (
-        tempDataStoraGE[MACHI].name
-          .toLowerCase()
-          .includes(searchName.toLowerCase())
-      ) {
-        const filterData = tempDataStoraGE[MACHI];
-        paginationOfAllTheData.data.push({
-          id: filterData.id,
-          name: filterData.name,
-          userName: filterData.userName,
-          email: filterData.email,
-          address: filterData.address,
-          city: filterData.city,
-          phoneNumber: filterData.phoneNumber,
-          balance: filterData.balance,
-        });
-      }
-    }
-    MACHI += 1;
   }
 
   return paginationOfAllTheData;
@@ -244,7 +207,6 @@ async function createAccount(
 
   return true;
 }
-
 /**
  * Check whether the email is registered
  * @param {string} email - Email
@@ -259,7 +221,6 @@ async function emailIsRegistered(email) {
 
   return false;
 }
-
 /**
  * Check whether the userName is registered
  * @param {string} userName - userName
@@ -274,10 +235,147 @@ async function userNameIsRegistered(userName) {
 
   return false;
 }
+/**
+ * Check whether the phoneNumber is registered
+ * @param {string} phoneNumber - phoneNumber
+ * @returns {boolean}
+ */
+async function phoneNumberIsRegistered(phoneNumber) {
+  const account = await accountsRepository.getAccountbyPhoneNumber(phoneNumber);
+
+  if (account) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Get user detail
+ * @param {string} id - User ID
+ * @returns {Object}
+ */
+async function getAccount(id) {
+  const account = await accountsRepository.getAccountById(id);
+
+  // User not found
+  if (!account) {
+    return null;
+  }
+
+  return {
+    name: account.name,
+    userName: account.userName,
+    email: account.email,
+    address: account.address,
+    city: account.city,
+    phoneNumber: account.phoneNumber,
+    balance: account.balance,
+  };
+}
+
+/**
+ * Delete account
+ * @param {string} id - User ID
+ * @returns {boolean}
+ */
+async function deleteAccount(id) {
+  const account = await accountsRepository.getAccountById(id);
+
+  // User not found
+  if (!account) {
+    return null;
+  }
+
+  try {
+    await accountsRepository.deleteAccount(id);
+  } catch (err) {
+    return null;
+  }
+
+  return true;
+}
+/**
+ * Change account password
+ * @param {string} id - account id
+ * @param {string} password - Password
+ * @returns {boolean}
+ */
+async function changePassword(id, password) {
+  const account = await accountsRepository.getAccountById(id);
+
+  // Check if account not found
+  if (!account) {
+    return null;
+  }
+
+  const hashedPassword = await hashPassword(password);
+
+  const changeSuccess = await accountsRepository.changePassword(
+    id,
+    hashedPassword
+  );
+
+  if (!changeSuccess) {
+    return null;
+  }
+
+  return true;
+}
+/**
+ * Check whether the password is correct
+ * @param {string} id - account ID
+ * @param {string} password - Password
+ * @returns {boolean}
+ */
+async function checkPassword(id, password) {
+  const account = await accountsRepository.getAccountById(id);
+  const checkPassword = passwordMatched(password, account.password);
+
+  if (account && checkPassword) {
+    return true;
+  } else {
+    return null;
+  }
+}
+
+async function updateAccount(id, name, email, address, city, phoneNumber) {
+  const account = await accountsRepository.getAccountById(id);
+  if (!account) {
+    return 'NoAccount';
+  }
+
+  try {
+    if (name !== null) {
+      await accountsRepository.updateName(id, name);
+    }
+    if (email !== null) {
+      await accountsRepository.updateEmail(id, email);
+    }
+    if (address !== null) {
+      await accountsRepository.updateAddress(id, address);
+    }
+    if (city !== null) {
+      await accountsRepository.updateCity(id, city);
+    }
+    if (phoneNumber !== null) {
+      await accountsRepository.updatePhoneNumber(id, phoneNumber);
+    }
+    return true;
+  } catch (error) {
+    return null;
+  }
+}
 
 module.exports = {
   getAccounts,
+  getAccount,
+  deleteAccount,
   createAccount,
   emailIsRegistered,
   userNameIsRegistered,
+  phoneNumberIsRegistered,
+  changePassword,
+  checkPassword,
+  updateAccount,
 };

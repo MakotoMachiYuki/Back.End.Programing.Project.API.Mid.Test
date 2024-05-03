@@ -1,4 +1,7 @@
 const { Account } = require('../../../../models');
+const {
+  balance,
+} = require('../../../../models/BankingSchema.js/account-schema');
 
 /**
  * Get a list of accounts
@@ -19,6 +22,7 @@ async function getAccountById(id) {
 
 /**
  * get a list of Accounts by the limit of page size, where the data started (offset)
+ * plus filter the data by finding the substring by using regex
  * @param {Integer} limitOfDataValue - page Size
  * @param {Integer} offsetOfDataValue - where the data started
  * @param {Integer} sortPathOfDataValue - path for sorting
@@ -29,19 +33,81 @@ async function getAccountByFilteringAndSorting(
   limitOfDataValue,
   offsetOfDataValue,
   sortPathOfDataValue,
-  sortOfDataValue
+  sortOfDataValue,
+  searchPath,
+  searchName
 ) {
   const sortValueOfDataValue = parseInt(sortOfDataValue);
-  if (sortPathOfDataValue == 'name') {
-    return Account.find({})
-      .limit(limitOfDataValue)
-      .skip(offsetOfDataValue)
-      .sort({ name: sortValueOfDataValue });
-  } else {
-    return Account.find({})
-      .limit(limitOfDataValue)
-      .skip(offsetOfDataValue)
-      .sort({ email: sortValueOfDataValue });
+  const regexName = new RegExp(searchName, 'i');
+
+  if (searchPath === 'email') {
+    if (sortPathOfDataValue == 'name') {
+      return Account.find({ email: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ name: sortValueOfDataValue });
+    } else if (sortPathOfDataValue == 'balance') {
+      return Account.find({ email: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ balance: sortValueOfDataValue });
+    } else if (sortPathOfDataValue == 'userName') {
+      return Account.find({ email: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ userName: sortValueOfDataValue });
+    } else {
+      return Account.find({ email: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ email: sortValueOfDataValue });
+    }
+  }
+  if (searchPath === 'name') {
+    if (sortPathOfDataValue == 'name') {
+      return Account.find({ name: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ name: sortValueOfDataValue });
+    } else if (sortPathOfDataValue == 'balance') {
+      return Account.find({ name: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ balance: sortValueOfDataValue });
+    } else if (sortPathOfDataValue == 'userName') {
+      return Account.find({ name: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ userName: sortValueOfDataValue });
+    } else {
+      return Account.find({ name: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ email: sortValueOfDataValue });
+    }
+  }
+  if (searchPath === 'userName') {
+    if (sortPathOfDataValue == 'name') {
+      return Account.find({ userName: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ name: sortValueOfDataValue });
+    } else if (sortPathOfDataValue == 'balance') {
+      return Account.find({ userName: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ balance: sortValueOfDataValue });
+    } else if (sortPathOfDataValue == 'userName') {
+      return Account.find({ userName: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ userName: sortValueOfDataValue });
+    } else {
+      return Account.find({ userName: regexName })
+        .limit(limitOfDataValue)
+        .skip(offsetOfDataValue)
+        .sort({ email: sortValueOfDataValue });
+    }
   }
 }
 
@@ -90,6 +156,14 @@ async function getAccountByEmail(email) {
 async function getAccountByUserName(userName) {
   return Account.findOne({ userName });
 }
+/**
+ * Get Account by phone to prevent duplicate phoneNumber
+ * @param {string} phoneNumber - phoneNumber
+ * @returns {Promise}
+ */
+async function getAccountbyPhoneNumber(phoneNumber) {
+  return Account.findOne({ phoneNumber });
+}
 
 /**
  * Update existing Account
@@ -131,11 +205,88 @@ async function changePassword(id, password) {
   return Account.updateOne({ _id: id }, { $set: { password } });
 }
 
+/**List of function to update each value individually
+ * @param {string} id - Account id
+ * @param {string} name - name
+ * @param {string} email - email
+ * @param {string} address - address
+ * @param {string} city - city
+ * @param {number} phoneNumber - phone number
+ */
+async function updateName(id, name) {
+  return Account.updateOne(
+    {
+      _id: id,
+    },
+    {
+      $set: {
+        name,
+      },
+    }
+  );
+}
+async function updateEmail(id, email) {
+  return Account.updateOne(
+    {
+      _id: id,
+    },
+    {
+      $set: {
+        email,
+      },
+    }
+  );
+}
+async function updateAddress(id, address) {
+  return Account.updateOne(
+    {
+      _id: id,
+    },
+    {
+      $set: {
+        address,
+      },
+    }
+  );
+}
+async function updateCity(id, city) {
+  return Account.updateOne(
+    {
+      _id: id,
+    },
+    {
+      $set: {
+        city,
+      },
+    }
+  );
+}
+async function updatePhoneNumber(id, phoneNumber) {
+  return Account.updateOne(
+    {
+      _id: id,
+    },
+    {
+      $set: {
+        phoneNumber,
+      },
+    }
+  );
+}
+
 module.exports = {
   getAccounts,
   getAccountById,
   getAccountByEmail,
   getAccountByUserName,
+  getAccountbyPhoneNumber,
   getAccountByFilteringAndSorting,
   createAccount,
+  deleteAccount,
+  changePassword,
+  updateName,
+  updateEmail,
+  updateAddress,
+  updateCity,
+  updatePhoneNumber,
 };

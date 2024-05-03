@@ -29,6 +29,12 @@ async function getUsers(request, response, next) {
         'Required search query on the parameter!'
       );
     }
+    if (users === 'NoUserWithRequestSearch') {
+      throw errorResponder(
+        errorTypes.NOT_FOUND,
+        'NO USERS WITH REQUEST SEARCH FOUNDED IN THE DATABASE!'
+      );
+    }
 
     if (users === 'PageBeyond') {
       throw errorResponder(
