@@ -5,11 +5,11 @@ const { Transaction } = require('../../../../models');
  * @returns {Promise}
  */
 async function getTransactions() {
-  return Transaction.find({});
+  return Transaction.find({}).sort({ time: -1 });
 }
 
 async function getTransactionByUserName(userName) {
-  return Transaction.find({ userName: userName });
+  return Transaction.find({ userName: userName }).sort({ time: -1 });
 }
 
 async function transactionDeposit(
@@ -61,9 +61,9 @@ async function transactionTransferSender(
 async function transactionTranferReceived(
   userName,
   userName_sender,
-  transactionValue,
   old_balance,
-  current_balance
+  current_balance,
+  transactionValue
 ) {
   const time = new Date().toString();
   return Transaction.create({
