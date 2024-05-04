@@ -22,7 +22,7 @@ const loginDetail = mongoose.model(
   'loginDetail',
   mongoose.Schema(loginDetailSchema)
 );
-const transaction = mongoose.model(
+const Transaction = mongoose.model(
   'Transaction_History',
   mongoose.Schema(transactionHistory)
 );
@@ -36,7 +36,7 @@ module.exports = {
   mongoose,
   User,
   loginDetail,
-  transaction,
+  Transaction,
   Account,
   AccountloginDetail,
 };

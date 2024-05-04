@@ -1,6 +1,6 @@
 const accountsRepository = require('./banking-repository');
+const transactionRepository = require('../transaction/transaction-repository');
 const { hashPassword, passwordMatched } = require('../../../../utils/password');
-const { P } = require('pino');
 
 async function getAccounts(
   numberOfPages,
@@ -330,9 +330,13 @@ async function changePassword(id, password) {
  */
 async function checkPassword(id, password) {
   const account = await accountsRepository.getAccountById(id);
-  const checkPassword = passwordMatched(password, account.password);
 
-  if (account && checkPassword) {
+  const accountPassword = account
+    ? account.password
+    : '<RANDOM_PASSWORD_FILLER>';
+  const passwordChecked = await passwordMatched(password, accountPassword);
+
+  if (passwordChecked && account) {
     return true;
   } else {
     return null;
@@ -367,6 +371,102 @@ async function updateAccount(id, name, email, address, city, phoneNumber) {
   }
 }
 
+async function deposit(id, moneyValue) {
+  const account = await accountsRepository.getAccountById(id);
+
+  const old_balance = account.balance;
+
+  const current_balance = old_balance + moneyValue;
+
+  try {
+    await accountsRepository.updateBalance(id, current_balance);
+
+    await transactionRepository.transactionDeposit(
+      account.userName,
+      old_balance,
+      current_balance,
+      moneyValue
+    );
+
+    return [old_balance, current_balance];
+  } catch (error) {
+    return null;
+  }
+}
+
+async function withdraw(id, moneyValue) {
+  const account = await accountsRepository.getAccountById(id);
+
+  const old_balance = parseFloat(account.balance);
+
+  if (old_balance == 0) {
+    return 'noMoney';
+  }
+
+  let current_balance = old_balance - moneyValue;
+  if (current_balance < 0) {
+    current_balance = 0;
+  }
+
+  try {
+    await accountsRepository.updateBalance(id, current_balance);
+
+    await transactionRepository.transactionWithdraw(
+      account.userName,
+      old_balance,
+      current_balance,
+      moneyValue
+    );
+
+    return [old_balance, current_balance];
+  } catch (error) {
+    return null;
+  }
+}
+
+async function transfer(id, userName, moneyValue) {
+  const ownAccount = await accountsRepository.getAccountById(id);
+  const targetAccount = await accountsRepository.getAccountByUserName(userName);
+
+  const old_balance = parseFloat(ownAccount.balance);
+
+  if (old_balance == 0 || old_balance < moneyValue) {
+    return 'NoEnoughMoney';
+  }
+
+  if (!targetAccount) {
+    return 'NoTargetAccount';
+  }
+
+  const targetBalanceNow = parseFloat(targetAccount.balance);
+
+  const targetBalanceNew = targetBalanceNow + moneyValue;
+  const current_balance = old_balance - moneyValue;
+
+  try {
+    await accountsRepository.updateBalance(id, current_balance);
+    await accountsRepository.updateBalance(targetAccount.id, targetBalanceNew);
+
+    await transactionRepository.transactionTransferSender(
+      ownAccount.userName,
+      targetAccount.userName,
+      moneyValue
+    );
+
+    await transactionRepository.transactionTranferReceived(
+      targetAccount.userName,
+      ownAccount.userName,
+      targetBalanceNow,
+      targetBalanceNew,
+      moneyValue
+    );
+
+    return [old_balance, current_balance, moneyValue];
+  } catch (error) {
+    return null;
+  }
+}
+
 module.exports = {
   getAccounts,
   getAccount,
@@ -378,4 +478,7 @@ module.exports = {
   changePassword,
   checkPassword,
   updateAccount,
+  deposit,
+  withdraw,
+  transfer,
 };

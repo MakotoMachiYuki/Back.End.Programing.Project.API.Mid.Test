@@ -1,5 +1,6 @@
 const joi = require('joi');
 const { joiPasswordExtendCore } = require('joi-password');
+const { withdraw } = require('./banking-service');
 const joiPassword = joi.extend(joiPasswordExtendCore);
 
 module.exports = {
@@ -74,6 +75,34 @@ module.exports = {
         .required()
         .label('New password'),
       password_confirm: joi.string().required().label('Password confirmation'),
+    },
+  },
+
+  deposit: {
+    body: {
+      deposit: joi.number().required().greater(0).label('Deposit'),
+    },
+  },
+  withdraw: {
+    body: {
+      withdraw: joi.number().required().greater(0).label('Withdraw'),
+    },
+  },
+
+  transfer: {
+    body: {
+      target_userName: joi
+        .string()
+        .alphanum()
+        .min(8)
+        .max(30)
+        .required()
+        .label('Target UserName (Receiver)'),
+      transfer_amount: joi
+        .number()
+        .required()
+        .greater(0)
+        .label('Transfer Amount'),
     },
   },
 };

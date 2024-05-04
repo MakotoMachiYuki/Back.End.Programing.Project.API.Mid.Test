@@ -23,6 +23,7 @@ async function checkLoginCredentials(email, password, time) {
   // the password matches.
 
   if (user && passwordChecked) {
+    const loginTime = time;
     const status = 'login success';
     const attempt = 0;
     const lockedTimer = 0;
@@ -33,7 +34,7 @@ async function checkLoginCredentials(email, password, time) {
       await authenticationRepository.createLoginDetail(
         email,
         status,
-        time,
+        loginTime,
         lockedTimer,
         attempt
       );
@@ -41,7 +42,7 @@ async function checkLoginCredentials(email, password, time) {
       await authenticationRepository.updateLoginDetail(
         email,
         status,
-        time,
+        loginTime,
         lockedTimer,
         attempt
       );
@@ -100,7 +101,7 @@ async function checkLoginAttempt(email, time) {
   if (tempAttempt > attemptLimit) {
     if (userLoginDetail.lockedTimer === 0) {
       const tempStatus = 'locked';
-      const newlockedTimer = Date.now() + 1000 * 60 * timeLimit;
+      const newlockedTimer = Date.now() + 60000 * timeLimit;
       await authenticationRepository.updateLoginDetail(
         email,
         tempStatus,
@@ -116,7 +117,7 @@ async function checkLoginAttempt(email, time) {
         const lockedTimer = userLoginDetail.lockedTimer;
         const tempStatus = 'locked';
         const timeLeft = Math.ceil(
-          (userLoginDetail.lockedTimer - Date.now()) / (1000 * 60)
+          (userLoginDetail.lockedTimer - Date.now()) / 60000
         );
         await authenticationRepository.updateLoginDetail(
           email,

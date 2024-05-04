@@ -1,6 +1,5 @@
 const accountService = require('./banking-service');
 const { errorResponder, errorTypes } = require('../../../../core/errors');
-const { P } = require('pino');
 
 async function getAccounts(request, response, next) {
   const page_number = parseInt(request.query.page_number) || null;
@@ -228,6 +227,99 @@ async function updatePassword(request, response, next) {
   }
 }
 
+async function deposit(request, response, next) {
+  const id = request.params.id;
+  const moneyValue = parseFloat(request.body.deposit);
+
+  try {
+    const successDeposit = await accountService.deposit(id, moneyValue);
+
+    if (!successDeposit) {
+      throw errorResponder(
+        errorTypes.UNPROCESSABLE_ENTITY,
+        'Failed to deposit the balance!'
+      );
+    }
+
+    const old_balance = successDeposit[0];
+    const new_balance = successDeposit[1];
+
+    return response.status(200).json({ id, old_balance, new_balance });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function withdraw(request, response, next) {
+  const id = request.params.id;
+  const moneyValue = parseFloat(request.body.withdraw);
+
+  try {
+    const successWithdraw = await accountService.withdraw(id, moneyValue);
+
+    if (!successWithdraw) {
+      throw errorResponder(
+        errorTypes.UNPROCESSABLE_ENTITY,
+        'Failed to withdraw the balance!'
+      );
+    }
+
+    if (successWithdraw === 'noMoney') {
+      throw errorResponder(
+        errorTypes.UNPROCESSABLE_ENTITY,
+        'No Money left in the account!'
+      );
+    }
+
+    const old_balance = successWithdraw[0];
+    const new_balance = successWithdraw[1];
+
+    return response.status(200).json({ id, old_balance, new_balance });
+  } catch (error) {
+    return next(error);
+  }
+}
+
+async function transfer(request, response, next) {
+  const id = request.params.id;
+  const target_userName = request.body.target_userName;
+  const transfer_amount = parseFloat(request.body.transfer_amount);
+
+  try {
+    const successTransfer = await accountService.transfer(
+      id,
+      target_userName,
+      transfer_amount
+    );
+
+    if (successTransfer === 'NoEnoughMoney') {
+      throw errorResponder(
+        errorTypes.UNPROCESSABLE_ENTITY,
+        'Your Balance is not enough for the transfer!'
+      );
+    }
+
+    if (successTransfer === 'NoTargetAccount') {
+      throw errorResponder(
+        errorTypes.UNPROCESSABLE_ENTITY,
+        'Your target/receiver account does not exist!'
+      );
+    }
+
+    const Transfer_Detail = {
+      old_balance: successTransfer[0],
+      new_balance: successTransfer[1],
+
+      Receiver: target_userName,
+      transfer_amount: successTransfer[2],
+    };
+
+    return response.status(200).json({ Transfer_Detail });
+  } catch (error) {
+    return next(error);
+  }
+}
+
 module.exports = {
   getAccounts,
   getAccount,
@@ -235,4 +327,7 @@ module.exports = {
   deleteAccount,
   updatePassword,
   updateAccount,
+  deposit,
+  withdraw,
+  transfer,
 };

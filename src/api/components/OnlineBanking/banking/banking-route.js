@@ -5,6 +5,7 @@ const AccountAuthenticationMiddleware = require('../../../middlewares/bankingAut
 const celebrate = require('../../../../core/celebrate-wrappers');
 const accountControllers = require('./banking-controller');
 const accountValidators = require('./banking-validator');
+const transactionController = require('../transaction/transaction-controller');
 
 const route = express.Router();
 
@@ -18,6 +19,18 @@ module.exports = (app) => {
   );
 
   route.get('/', AdminAuthenticationMiddleWare, accountControllers.getAccounts);
+
+  route.get(
+    '/transaction/',
+    AdminAuthenticationMiddleWare,
+    transactionController.getTransactions
+  );
+
+  route.get(
+    '/:id/transaction/',
+    AdminAuthenticationMiddleWare,
+    transactionController.getTransactionPerUser
+  );
 
   route.get(
     '/:id',
@@ -45,9 +58,24 @@ module.exports = (app) => {
     accountControllers.updateAccount
   );
 
-  route.patch('/:id/deposit/');
+  route.patch(
+    '/:id/deposit/',
+    AccountAuthenticationMiddleware,
+    celebrate(accountValidators.deposit),
+    accountControllers.deposit
+  );
 
-  route.patch('/:id/withdraw/');
+  route.patch(
+    '/:id/withdraw/',
+    AccountAuthenticationMiddleware,
+    celebrate(accountValidators.withdraw),
+    accountControllers.withdraw
+  );
 
-  route.put('/:id/transfer/');
+  route.put(
+    '/:id/transfer/',
+    AccountAuthenticationMiddleware,
+    celebrate(accountValidators.transfer),
+    accountControllers.transfer
+  );
 };

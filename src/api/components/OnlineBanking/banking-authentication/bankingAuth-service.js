@@ -113,7 +113,7 @@ async function checkAccountLoginAttempt(userName, time) {
   if (tempAttempt > attemptLimit) {
     if (accountLoginDetail.lockedTimer === 0) {
       const tempStatus = 'locked';
-      const newlockedTimer = Date.now() + 1000 * 60 * timeLimit;
+      const newlockedTimer = Date.now() + 60000 * timeLimit;
       await bankingAuthRepository.updateAccountloginDetail(
         userName,
         tempStatus,
@@ -129,7 +129,7 @@ async function checkAccountLoginAttempt(userName, time) {
         const lockedTimer = accountLoginDetail.lockedTimer;
         const tempStatus = 'locked';
         const timeLeft = Math.ceil(
-          (accountLoginDetail.lockedTimer - Date.now()) / (1000 * 60)
+          (accountLoginDetail.lockedTimer - Date.now()) / 60000
         );
         await bankingAuthRepository.updateAccountloginDetail(
           userName,

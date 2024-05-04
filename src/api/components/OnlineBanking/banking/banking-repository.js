@@ -1,7 +1,4 @@
 const { Account } = require('../../../../models');
-const {
-  balance,
-} = require('../../../../models/BankingSchema.js/account-schema');
 
 /**
  * Get a list of accounts
@@ -19,7 +16,6 @@ async function getAccounts() {
 async function getAccountById(id) {
   return Account.findById(id);
 }
-
 /**
  * get a list of Accounts by the limit of page size, where the data started (offset)
  * plus filter the data by finding the substring by using regex
@@ -166,27 +162,6 @@ async function getAccountbyPhoneNumber(phoneNumber) {
 }
 
 /**
- * Update existing Account
- * @param {string} id - Account ID
- * @param {string} name - Name
- * @param {string} email - Email
- * @returns {Promise}
- */
-async function updateAccount(id, name, email) {
-  return Account.updateOne(
-    {
-      _id: id,
-    },
-    {
-      $set: {
-        name,
-        email,
-      },
-    }
-  );
-}
-
-/**
  * Delete a Account
  * @param {string} id - Account ID
  * @returns {Promise}
@@ -274,6 +249,19 @@ async function updatePhoneNumber(id, phoneNumber) {
   );
 }
 
+async function updateBalance(id, balance) {
+  return Account.updateOne(
+    {
+      _id: id,
+    },
+    {
+      $set: {
+        balance,
+      },
+    }
+  );
+}
+
 module.exports = {
   getAccounts,
   getAccountById,
@@ -289,4 +277,5 @@ module.exports = {
   updateAddress,
   updateCity,
   updatePhoneNumber,
+  updateBalance,
 };
