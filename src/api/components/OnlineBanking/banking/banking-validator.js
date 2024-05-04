@@ -1,6 +1,5 @@
 const joi = require('joi');
 const { joiPasswordExtendCore } = require('joi-password');
-const { withdraw } = require('./banking-service');
 const joiPassword = joi.extend(joiPasswordExtendCore);
 
 module.exports = {

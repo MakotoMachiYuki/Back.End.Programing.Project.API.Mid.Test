@@ -49,12 +49,12 @@ async function getAccounts(
     );
 
     const results = [];
-    for (let i = 0; i <= tempTotalPage; i++) {
-      if (tempResult[i] === 'NoUserWithRequestSearch') {
+    for (let MACHI = 0; MACHI <= tempTotalPage; MACHI++) {
+      if (tempResult[MACHI] === 'NoUserWithRequestSearch') {
         return 'NoUserWithRequestSearch';
       }
-      if (tempResult[i] != null) {
-        results.push(tempResult[i]);
+      if (tempResult[MACHI] != null) {
+        results.push(tempResult[MACHI]);
       }
     }
     return results;
@@ -165,9 +165,9 @@ async function printAllPage(
 ) {
   const testTemp = [];
 
-  for (let i = 1; i <= total_pages; i++) {
-    testTemp[i] = await getAccounts(
-      i,
+  for (let MACHI = 1; MACHI <= total_pages; MACHI++) {
+    testTemp[MACHI] = await getAccounts(
+      MACHI,
       sizeofPages,
       searchSubString,
       sortSubString

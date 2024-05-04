@@ -6,8 +6,8 @@ async function getTransactionAll() {
 
   const resultsTransaction = [];
 
-  for (let i = 0; i < fullTransaction.length; i++) {
-    const transaction = fullTransaction[i];
+  for (let MACHI = 0; MACHI < fullTransaction.length; MACHI++) {
+    const transaction = fullTransaction[MACHI];
 
     if (transaction.deposit != null) {
       resultsTransaction.push({
@@ -56,8 +56,8 @@ async function getTransactionPerUser(id) {
     await transactionRepository.getTransactionByUserName(account.userName);
 
   const resultsTransaction = [];
-  for (let i = 0; i < transactionAccount.length; i++) {
-    const transaction = transactionAccount[i];
+  for (let MACHI = 0; MACHI < transactionAccount.length; MACHI++) {
+    const transaction = transactionAccount[MACHI];
     if (transaction.deposit != null) {
       resultsTransaction.push({
         old_balance: transaction.old_balance,

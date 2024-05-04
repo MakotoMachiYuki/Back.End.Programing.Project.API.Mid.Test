@@ -11,18 +11,10 @@ const { passwordMatched } = require('../../../../utils/password');
 async function checkAccountLoginCredentials(userName, password, time) {
   const account = await bankingAuthRepository.getAccountByUserName(userName);
 
-  // We define default account password here as '<RANDOM_PASSWORD_FILTER>'
-  // to handle the case when the account login is invalid. We still want to
-  // check the password anyway, so that it prevents the attacker in
-  // guessing login credentials by looking at the processing time.
   const accountPassword = account
     ? account.password
     : '<RANDOM_PASSWORD_FILLER>';
   const passwordChecked = await passwordMatched(password, accountPassword);
-
-  // Because we always check the password (see above comment), we define the
-  // login attempt as successful when the `account` is found (by userName) and
-  // the password matches.
 
   if (account && passwordChecked) {
     const status = 'login success';

@@ -1,7 +1,4 @@
 const { Transaction } = require('../../../../models');
-const {
-  userName,
-} = require('../../../../models/BankingSchema.js/transcationHistory-schema');
 
 /**
  * Get a list of accounts
