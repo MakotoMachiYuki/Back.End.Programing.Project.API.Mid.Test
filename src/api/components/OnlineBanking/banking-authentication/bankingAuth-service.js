@@ -40,6 +40,10 @@ async function checkAccountLoginCredentials(userName, password, time) {
         attempt
       );
     } else {
+      const checkStatus = checkuserName.status;
+      if (checkStatus === 'locked') {
+        return 'PasswordWrong';
+      }
       await bankingAuthRepository.updateAccountloginDetail(
         userName,
         status,
@@ -98,7 +102,11 @@ async function checkAccountLoginAttempt(userName, time) {
   //everytime account input the wrong password, the total attempt from the database will be plus one
   const tempAttempt = parseInt(accountLoginDetail.attempt) + 1;
 
-  if (tempAttempt <= attemptLimit && accountLoginDetail.lockedTimer === 0) {
+  if (
+    tempAttempt <= attemptLimit &&
+    accountLoginDetail.lockedTimer === 0 &&
+    accountLoginDetail.status !== 'locked'
+  ) {
     await bankingAuthRepository.updateAccountloginDetail(
       userName,
       status,
@@ -171,7 +179,12 @@ async function checkAccountLoginTime(userName, time) {
 
   const accountLoginDetail =
     await bankingAuthRepository.getLoginDetail(userName);
-  const tempVariable = accountLoginDetail.time;
+
+  let tempVariable = time;
+  if (accountLoginDetail != null) {
+    tempVariable = accountLoginDetail.time;
+  }
+
   const tempTimeStorageDB = tempVariable.split(/[-: ]/);
   const [DBhour, DBminute] = [tempTimeStorageNow[3], tempTimeStorageDB[4]];
 

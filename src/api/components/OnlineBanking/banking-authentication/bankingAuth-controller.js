@@ -53,9 +53,9 @@ async function accountlogin(request, response, next) {
       }
       //when the timer is finished, but if the password is still wrong after the last lockout, it will return this message
       if (attemptDetail == 'AttemptReset') {
-        throw (
-          (errorResponder(errorTypes.INVALID_PASSWORD),
-          'Your attempts are reseted! goodluck!')
+        throw errorResponder(
+          errorTypes.INVALID_PASSWORD,
+          'Your attempts are reseted! goodluck!'
         );
       }
     }

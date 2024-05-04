@@ -51,11 +51,11 @@ async function login(request, response, next) {
           `Limit Reached! Time left until you can try it again :) in ${attemptDetail[1]} minutes!`
         );
       }
-      //when the timer is finished, but if the password is still wrong after the last lockout, it will return this message
+      //when the timer is finished, it'll send respone that your attempts has been reseted!
       if (attemptDetail == 'AttemptReset') {
-        throw (
-          (errorResponder(errorTypes.INVALID_PASSWORD),
-          'Your attempts are reseted! goodluck!')
+        throw errorResponder(
+          errorTypes.UNPROCESSABLE_ENTITY,
+          'Your attempts are reseted! goodluck!'
         );
       }
     }

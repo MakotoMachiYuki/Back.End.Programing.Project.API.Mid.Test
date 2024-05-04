@@ -39,6 +39,10 @@ async function checkLoginCredentials(email, password, time) {
         attempt
       );
     } else {
+      const checkStatus = checkEmail.status;
+      if (checkStatus === 'locked') {
+        return 'PasswordWrong';
+      }
       await authenticationRepository.updateLoginDetail(
         email,
         status,
@@ -86,7 +90,11 @@ async function checkLoginAttempt(email, time) {
   //everytime user input the wrong password, the total attempt from the database will be plus one
   const tempAttempt = parseInt(userLoginDetail.attempt) + 1;
 
-  if (tempAttempt <= attemptLimit && userLoginDetail.lockedTimer === 0) {
+  if (
+    tempAttempt <= attemptLimit &&
+    userLoginDetail.lockedTimer === 0 &&
+    userLoginDetail.status !== 'locked'
+  ) {
     await authenticationRepository.updateLoginDetail(
       email,
       status,
@@ -158,7 +166,11 @@ async function checkLoginTime(email, time) {
   let timeNow = hour * 60 + minute;
 
   const userLoginDetail = await authenticationRepository.getLoginDetail(email);
-  const tempVariable = userLoginDetail.time;
+  let tempVariable = time;
+  if (userLoginDetail != null) {
+    tempVariable = userLoginDetail.time;
+  }
+
   const tempTimeStorageDB = tempVariable.split(/[-: ]/);
   const [DBhour, DBminute] = [tempTimeStorageNow[3], tempTimeStorageDB[4]];
 
