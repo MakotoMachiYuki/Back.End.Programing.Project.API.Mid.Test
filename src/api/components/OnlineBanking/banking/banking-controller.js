@@ -151,6 +151,8 @@ async function getAccount(request, response, next) {
 async function deleteAccount(request, response, next) {
   try {
     const id = request.params.id;
+    const account = await accountService.getAccount(id);
+    const userName = account.userName;
 
     const success = await accountService.deleteAccount(id);
     if (!success) {
@@ -160,8 +162,6 @@ async function deleteAccount(request, response, next) {
       );
     }
 
-    const account = await accountService.getAccount(id);
-    const userName = account.userName;
     const successMessage = `Account with ID ${id} and USERNAME: ${userName} has been successfully deleted! `;
     return response.status(200).json({ successMessage });
   } catch (error) {
