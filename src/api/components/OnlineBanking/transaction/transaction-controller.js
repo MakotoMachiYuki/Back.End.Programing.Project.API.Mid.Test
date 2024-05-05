@@ -1,6 +1,13 @@
 const transactionService = require('./transaction-service');
 const { errorResponder, errorTypes } = require('../../../../core/errors');
 
+/**
+ * Handle get list of transactions request
+ * @param {object} request - Express request object
+ * @param {object} response - Express request object
+ * @param {object} next - Express request object
+ * @returns {object} Response object or pass an error to the next route
+ */
 async function getTransactions(request, response, next) {
   try {
     const transaction = await transactionService.getTransactionAll();
@@ -18,6 +25,13 @@ async function getTransactions(request, response, next) {
   }
 }
 
+/**
+ * Handle get list of transaction by user ID
+ * @param {object} request - Express request object
+ * @param {object} response - Express request object
+ * @param {object} next - Express request object
+ * @returns {object} Response object or pass an error to the next route
+ */
 async function getTransactionPerUser(request, response, next) {
   try {
     const transaction = await transactionService.getTransactionPerUser(

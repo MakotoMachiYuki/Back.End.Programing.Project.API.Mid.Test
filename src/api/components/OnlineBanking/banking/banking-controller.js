@@ -1,6 +1,13 @@
 const accountService = require('./banking-service');
 const { errorResponder, errorTypes } = require('../../../../core/errors');
 
+/**
+ * Handle get list of accounts request
+ * @param {object} request - Express request object
+ * @param {object} response - Express request object
+ * @param {object} next - Express request object
+ * @returns {object} Response object or pass an error to the next route
+ */
 async function getAccounts(request, response, next) {
   const page_number = parseInt(request.query.page_number) || null;
   const page_size = parseInt(request.query.page_size) || null;
@@ -42,6 +49,13 @@ async function getAccounts(request, response, next) {
   }
 }
 
+/**
+ * Handle create an account request
+ * @param {object} request - Express request object
+ * @param {object} response - Express request object
+ * @param {object} next - Express request object
+ * @returns {object} Response object or pass an error to the next route
+ */
 async function createAccount(request, response, next) {
   try {
     const name = request.body.name;
@@ -108,7 +122,13 @@ async function createAccount(request, response, next) {
     return next(error);
   }
 }
-
+/**
+ * Handle get an account by id
+ * @param {object} request - Express request object
+ * @param {object} response - Express request object
+ * @param {object} next - Express request object
+ * @returns {object} Response object or pass an error to the next route
+ */
 async function getAccount(request, response, next) {
   try {
     const account = await accountService.getAccount(request.params.id);
@@ -121,6 +141,13 @@ async function getAccount(request, response, next) {
   }
 }
 
+/**
+ * Handle deletion of an account
+ * @param {object} request - Express request object
+ * @param {object} response - Express request object
+ * @param {object} next - Express request object
+ * @returns {object} Response object or pass an error to the next route
+ */
 async function deleteAccount(request, response, next) {
   try {
     const id = request.params.id;
@@ -142,6 +169,13 @@ async function deleteAccount(request, response, next) {
   }
 }
 
+/**
+ * Handle update of an account
+ * @param {object} request - Express request object
+ * @param {object} response - Express request object
+ * @param {object} next - Express request object
+ * @returns {object} Response object or pass an error to the next route
+ */
 async function updateAccount(request, response, next) {
   const id = request.params.id;
   const name = request.body.name || null;
@@ -193,6 +227,13 @@ async function updateAccount(request, response, next) {
   }
 }
 
+/**
+ * Handle update on a password of the account
+ * @param {object} request - Express request object
+ * @param {object} response - Express request object
+ * @param {object} next - Express request object
+ * @returns {object} Response object or pass an error to the next route
+ */
 async function updatePassword(request, response, next) {
   const id = request.params.id;
   const password_old = request.body.password_old;
@@ -227,6 +268,13 @@ async function updatePassword(request, response, next) {
   }
 }
 
+/**
+ * Handle account deposit
+ * @param {object} request - Express request object
+ * @param {object} response - Express request object
+ * @param {object} next - Express request object
+ * @returns {object} Response object or pass an error to the next route
+ */
 async function deposit(request, response, next) {
   const id = request.params.id;
   const moneyValue = parseFloat(request.body.deposit);
@@ -249,7 +297,13 @@ async function deposit(request, response, next) {
     return next(error);
   }
 }
-
+/**
+ * Handle account withdraw
+ * @param {object} request - Express request object
+ * @param {object} response - Express request object
+ * @param {object} next - Express request object
+ * @returns {object} Response object or pass an error to the next route
+ */
 async function withdraw(request, response, next) {
   const id = request.params.id;
   const moneyValue = parseFloat(request.body.withdraw);
@@ -280,6 +334,13 @@ async function withdraw(request, response, next) {
   }
 }
 
+/**
+ * Handle account transfer money to another account
+ * @param {object} request - Express request object
+ * @param {object} response - Express request object
+ * @param {object} next - Express request object
+ * @returns {object} Response object or pass an error to the next route
+ */
 async function transfer(request, response, next) {
   const id = request.params.id;
   const target_userName = request.body.target_userName;

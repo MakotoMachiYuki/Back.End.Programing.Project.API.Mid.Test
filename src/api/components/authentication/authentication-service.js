@@ -39,6 +39,9 @@ async function checkLoginCredentials(email, password, time) {
         attempt
       );
     } else {
+      //to check if the account is locked or not, if it is,
+      //then it'll return PasswordWrong in order to not let user login
+      //even tho they give the correct password but their account already got locked
       const checkStatus = checkEmail.status;
       if (checkStatus === 'locked') {
         return 'PasswordWrong';
@@ -166,6 +169,8 @@ async function checkLoginTime(email, time) {
   let timeNow = hour * 60 + minute;
 
   const userLoginDetail = await authenticationRepository.getLoginDetail(email);
+
+  //if the user fail to login for the first time
   let tempVariable = time;
   if (userLoginDetail != null) {
     tempVariable = userLoginDetail.time;

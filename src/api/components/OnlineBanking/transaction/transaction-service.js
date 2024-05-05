@@ -1,6 +1,10 @@
 const transactionRepository = require('./transaction-repository');
 const accountRepository = require('../banking/banking-repository');
 
+/**
+ * Get a list of all transactions with sort order by most recent and put them into an array
+ * @returns {Promise}
+ */
 async function getTransactionAll() {
   const fullTransaction = await transactionRepository.getTransactions();
 
@@ -9,6 +13,7 @@ async function getTransactionAll() {
   for (let MACHI = 0; MACHI < fullTransaction.length; MACHI++) {
     const transaction = fullTransaction[MACHI];
 
+    //filtering the schema for deposit, withdraw and transfer since all of them shared one database schema
     if (transaction.deposit != null) {
       resultsTransaction.push({
         userName: transaction.userName,
@@ -49,6 +54,11 @@ async function getTransactionAll() {
   return resultsTransaction;
 }
 
+/**
+ * Get a list of an account's transactions with sort order by most recent and put them into an array
+ * @param id
+ * @returns {Promise}
+ */
 async function getTransactionPerUser(id) {
   const account = await accountRepository.getAccountById(id);
 

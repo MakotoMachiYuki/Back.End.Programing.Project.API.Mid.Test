@@ -2,6 +2,14 @@ const accountsRepository = require('./banking-repository');
 const transactionRepository = require('../transaction/transaction-repository');
 const { hashPassword, passwordMatched } = require('../../../../utils/password');
 
+/**
+ * Get a lists of accounts and return with pagination
+ * @param {Number} numberOfPages
+ * @param {Number} sizeofPages
+ * @param {Number} searchSubString
+ * @param {Number} sortSubString
+ * @returns {Array}
+ */
 async function getAccounts(
   numberOfPages,
   sizeofPages,
@@ -176,7 +184,17 @@ async function printAllPage(
 
   return testTemp;
 }
-
+/**
+ * Create an account with the given variables
+ * @param {string} name
+ * @param {string} userName
+ * @param {string} email
+ * @param {string} password
+ * @param {string} address
+ * @param {string} city
+ * @param {number} phoneNumber
+ * @returns
+ */
 async function createAccount(
   name,
   userName,
@@ -251,8 +269,8 @@ async function phoneNumberIsRegistered(phoneNumber) {
 }
 
 /**
- * Get user detail
- * @param {string} id - User ID
+ * Get an account detail by id
+ * @param {string} id - account ID
  * @returns {Object}
  */
 async function getAccount(id) {
@@ -276,7 +294,7 @@ async function getAccount(id) {
 
 /**
  * Delete account
- * @param {string} id - User ID
+ * @param {string} id - account ID
  * @returns {boolean}
  */
 async function deleteAccount(id) {
@@ -342,7 +360,16 @@ async function checkPassword(id, password) {
     return null;
   }
 }
-
+/**
+ * Update the account data, but also can be done for each individual variable only
+ * @param {string} id
+ * @param {string} name
+ * @param {string} email
+ * @param {string} address
+ * @param {string} city
+ * @param {string} phoneNumber
+ * @returns {boolean}
+ */
 async function updateAccount(id, name, email, address, city, phoneNumber) {
   const account = await accountsRepository.getAccountById(id);
   if (!account) {
@@ -370,7 +397,12 @@ async function updateAccount(id, name, email, address, city, phoneNumber) {
     return null;
   }
 }
-
+/**
+ * Deposit (insert) the money value into the account's database
+ * @param {String} id
+ * @param {Number} moneyValue
+ * @returns {Number}
+ */
 async function deposit(id, moneyValue) {
   const account = await accountsRepository.getAccountById(id);
 
@@ -381,6 +413,7 @@ async function deposit(id, moneyValue) {
   try {
     await accountsRepository.updateBalance(id, current_balance);
 
+    //records the deposit
     await transactionRepository.transactionDeposit(
       account.userName,
       old_balance,
@@ -394,6 +427,12 @@ async function deposit(id, moneyValue) {
   }
 }
 
+/**
+ * Withdraw (subtract) the money value from the account's database
+ * @param {String} id
+ * @param {Number} moneyValue
+ * @returns {Number}
+ */
 async function withdraw(id, moneyValue) {
   const account = await accountsRepository.getAccountById(id);
 
@@ -403,6 +442,7 @@ async function withdraw(id, moneyValue) {
     return 'noMoney';
   }
 
+  //if the user want to withdraw more money from they had in the database, they will re
   let current_balance = old_balance - moneyValue;
   if (current_balance < 0) {
     current_balance = 0;
@@ -411,6 +451,7 @@ async function withdraw(id, moneyValue) {
   try {
     await accountsRepository.updateBalance(id, current_balance);
 
+    //records the withdraw
     await transactionRepository.transactionWithdraw(
       account.userName,
       old_balance,
@@ -423,7 +464,13 @@ async function withdraw(id, moneyValue) {
     return null;
   }
 }
-
+/**
+ * Transfer the money from an account to another account
+ * @param {String} id - id who is sending the money
+ * @param {String} userName - username who will receive the money
+ * @param {Number} moneyValue - the amount of transfer
+ * @returns {Number}
+ */
 async function transfer(id, userName, moneyValue) {
   const ownAccount = await accountsRepository.getAccountById(id);
   const targetAccount = await accountsRepository.getAccountByUserName(userName);
@@ -447,12 +494,13 @@ async function transfer(id, userName, moneyValue) {
     await accountsRepository.updateBalance(id, current_balance);
     await accountsRepository.updateBalance(targetAccount.id, targetBalanceNew);
 
+    //records the transactions for the sender
     await transactionRepository.transactionTransferSender(
       ownAccount.userName,
       targetAccount.userName,
       moneyValue
     );
-
+    //records the transactions for the received
     await transactionRepository.transactionTranferReceived(
       targetAccount.userName,
       ownAccount.userName,
